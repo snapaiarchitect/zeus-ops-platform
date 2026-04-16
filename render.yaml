@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: zeus-ops-backend
+    runtime: node
+    plan: starter
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zeus-ops-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        value: https://zeus-ops-frontend.vercel.app
+
+  - type: web
+    name: zeus-ops-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://zeus-ops-backend.onrender.com
+
+databases:
+  - name: zeus-ops-db
+    plan: starter
+    databaseName: zeus_ops
+    user: zeus_ops
