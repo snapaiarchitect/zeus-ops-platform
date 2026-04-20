@@ -80,11 +80,11 @@ Task.init(
     clientId: DataTypes.UUID,
     leadId: DataTypes.UUID,
     tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: DataTypes.JSON,
       defaultValue: []
     },
     attachments: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: DataTypes.JSON,
       defaultValue: []
     },
     completedAt: DataTypes.DATE

@@ -83,7 +83,7 @@ Lead.init(
     lastContactedAt: DataTypes.DATE,
     nextFollowUpAt: DataTypes.DATE,
     tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: DataTypes.JSON,
       defaultValue: []
     },
     utmSource: DataTypes.STRING(50),

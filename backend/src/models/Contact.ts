@@ -81,7 +81,7 @@ Contact.init(
     zipCode: DataTypes.STRING(20),
     country: DataTypes.STRING(100),
     tags: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
+      type: DataTypes.JSON,
       defaultValue: []
     },
     notes: DataTypes.TEXT,
