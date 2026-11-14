@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      # Mirror Render: a production install (no devDependencies) must still build the backend.
+      - name: Backend install + build (production mode)
+        working-directory: backend
+        env:
+          NODE_ENV: production
+        run: npm ci && npm run build
+      - name: Frontend install + type-check + build
+        working-directory: frontend
+        run: npm ci && npm run build
+      # Render auto-deploys master on every commit; no deploy step is needed here.
