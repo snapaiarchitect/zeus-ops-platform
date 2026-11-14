@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (credentials: LoginCredentials) => Promise<void>
+  login: (credentials: LoginCredentials) => Promise<User>
   register: (data: RegisterData) => Promise<void>
   logout: () => void
   updateUser: (user: User) => void
@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await authService.login(credentials)
     localStorage.setItem('zeus_token', response.token)
     setUser(response.user)
+    return response.user
   }, [])
 
   const register = useCallback(async (data: RegisterData) => {

@@ -33,7 +33,7 @@ CLIENT_URL=https://zeusops.com
 
 **Frontend (`frontend/.env`)**
 ```env
-VITE_API_URL=https://api.zeusops.com
+VITE_API_URL=https://api.zeusops.com   # with or without a trailing /api
 VITE_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
 ```
 

@@ -29,8 +29,8 @@ export function LoginPage() {
     setIsLoading(true)
 
     try {
-      await login(formData)
-      navigate('/dashboard')
+      const user = await login(formData)
+      navigate(user.role === 'client' ? '/dashboard' : '/admin')
     } catch (err) {
       setError('Invalid email or password. Please try again.')
     } finally {

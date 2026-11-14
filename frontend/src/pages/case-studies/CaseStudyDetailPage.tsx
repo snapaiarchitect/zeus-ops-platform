@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Navigation } from '@/components/Navigation'
+import { SampleContentNotice } from '@/components/SampleContentNotice'
 import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { caseStudies } from './CaseStudiesPage'
@@ -27,6 +28,7 @@ export function CaseStudyDetailPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Navigation />
+      <SampleContentNotice />
 
       {/* Back Navigation */}
       <div className="pt-24 pb-4">

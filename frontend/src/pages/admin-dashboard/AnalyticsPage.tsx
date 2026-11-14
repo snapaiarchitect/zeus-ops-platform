@@ -124,20 +124,18 @@ export function AnalyticsPage() {
         {/* Revenue Chart */}
         <div className="bg-[#0f0f1b] border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-6">Revenue Overview</h2>
-          <div className="h-64 flex items-end gap-2">
+          <div className="h-64 flex items-stretch gap-2">
             {data?.revenueByMonth?.length ? data.revenueByMonth.map((month, i) => {
               const max = Math.max(1, ...(data?.revenueByMonth?.map(m => m.revenue) || [1]))
               const height = (month.revenue / max) * 100
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="w-full relative">
+                <div key={i} className="flex-1 min-w-0 flex flex-col items-center gap-2" title={`$${month.revenue.toLocaleString()}`}>
+                  <span className="text-xs text-slate-300">${(month.revenue / 1000).toFixed(0)}k</span>
+                  <div className="w-full flex-1 flex items-end">
                     <div
                       className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg transition-all duration-500"
-                      style={{ height: `${Math.max(height, 10)}%` }}
+                      style={{ height: `${Math.max(height, 4)}%` }}
                     />
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-slate-400 opacity-0 hover:opacity-100 transition-opacity">
-                      ${(month.revenue / 1000).toFixed(0)}k
-                    </div>
                   </div>
                   <span className="text-xs text-slate-500">{month.month}</span>
                 </div>

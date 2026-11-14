@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { bookingsService } from '@/services/bookings.service'
-import type { Booking, BookingStatus } from '@/types/booking'
+import { leadsService } from '@/services/leads.service'
+import type { Lead } from '@/types/crm'
+import type { Booking, BookingStatus, BookingEventType } from '@/types/booking'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Calendar } from '@/components/ui/Calendar'
@@ -36,7 +38,9 @@ export function BookingsPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [filterStatus, setFilterStatus] = useState<string>('')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [formError, setFormError] = useState('')
+  const [newBooking, setNewBooking] = useState({ leadId: '', eventType: 'discovery' as BookingEventType, scheduledAt: '', duration: 30, notes: '' })
 
   useEffect(() => {
     loadBookings()
@@ -50,6 +54,33 @@ export function BookingsPage() {
       console.error('Failed to load bookings:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    leadsService.getAll({ limit: 100 }).then((d) => setLeads(d.leads)).catch(() => undefined)
+  }, [])
+
+  const handleCreate = async () => {
+    setFormError('')
+    if (!newBooking.leadId || !newBooking.scheduledAt) {
+      setFormError('Choose a lead and a date/time.')
+      return
+    }
+    try {
+      await bookingsService.create({
+        leadId: newBooking.leadId,
+        eventType: newBooking.eventType,
+        scheduledAt: new Date(newBooking.scheduledAt).toISOString(),
+        duration: newBooking.duration,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        notes: newBooking.notes,
+      })
+      setIsCreateOpen(false)
+      setNewBooking({ leadId: '', eventType: 'discovery', scheduledAt: '', duration: 30, notes: '' })
+      loadBookings()
+    } catch (error: any) {
+      setFormError(error?.response?.data?.error || 'Could not create the booking.')
     }
   }
 
@@ -141,10 +172,18 @@ export function BookingsPage() {
         {/* Calendar */}
         <div className="lg:col-span-2 bg-[#0f0f1b] border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-6">Calendar</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <Calendar
               selected={selectedDate}
               onSelect={setSelectedDate}
+              events={bookings
+                .filter((b) => b.status !== 'cancelled')
+                .map((b) => ({
+                  id: b.id,
+                  title: EVENT_TYPES.find((e) => e.id === b.eventType)?.label ?? b.eventType,
+                  start: new Date(b.scheduledAt),
+                  end: new Date(new Date(b.scheduledAt).getTime() + b.duration * 60000),
+                }))}
               className="w-full"
             />
             <div>
@@ -159,8 +198,7 @@ export function BookingsPage() {
                     return (
                       <div
                         key={booking.id}
-                        className="p-4 bg-[#0a0a0f] border border-white/10 rounded-lg hover:border-cyan-500/30 transition-all cursor-pointer"
-                        onClick={() => setSelectedBooking(booking)}
+                        className="p-4 bg-[#0a0a0f] border border-white/10 rounded-lg hover:border-cyan-500/30 transition-all"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
@@ -310,6 +348,59 @@ export function BookingsPage() {
           </table>
         </div>
       </div>
+
+      {/* Create Booking Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Booking</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            {formError && <p role="alert" className="text-sm text-red-400">{formError}</p>}
+            <select
+              aria-label="Lead"
+              value={newBooking.leadId}
+              onChange={(e) => setNewBooking({ ...newBooking, leadId: e.target.value })}
+              className="w-full bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-slate-300"
+            >
+              <option value="">Select a lead…</option>
+              {leads.map((l) => (
+                <option key={l.id} value={l.id}>{[l.firstName, l.lastName].filter(Boolean).join(' ') || l.email}{l.company ? ` — ${l.company}` : ''}</option>
+              ))}
+            </select>
+            <div className="grid grid-cols-2 gap-3">
+              <select
+                aria-label="Event type"
+                value={newBooking.eventType}
+                onChange={(e) => {
+                  const t = EVENT_TYPES.find((x) => x.id === e.target.value)
+                  setNewBooking({ ...newBooking, eventType: e.target.value as BookingEventType, duration: t?.duration ?? 30 })
+                }}
+                className="bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-slate-300"
+              >
+                {EVENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </select>
+              <input
+                aria-label="Date and time"
+                type="datetime-local"
+                value={newBooking.scheduledAt}
+                onChange={(e) => setNewBooking({ ...newBooking, scheduledAt: e.target.value })}
+                className="bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-slate-300"
+              />
+            </div>
+            <textarea
+              placeholder="Notes..."
+              value={newBooking.notes}
+              onChange={(e) => setNewBooking({ ...newBooking, notes: e.target.value })}
+              className="w-full h-20 bg-[#0a0a0f] border border-white/10 rounded-lg px-3 py-2 text-slate-300 resize-none"
+            />
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={handleCreate}>Create Booking</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

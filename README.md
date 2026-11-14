@@ -1,5 +1,7 @@
 # ZEUS OPS - Full Stack Application
 
+> **Running the prototype?** See [PROTOTYPE.md](./PROTOTYPE.md) for setup, demo logins, what is verified, and what is still stubbed.
+
 ## Architecture
 
 ```

@@ -22,6 +22,11 @@ import publicRoutes from './routes/public.js';
 
 dotenv.config();
 
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  console.error('❌ JWT_SECRET must be set to at least 32 characters');
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -96,12 +101,11 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connection established');
     
-    // Sync models (in production, use migrations instead)
-    if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync(); // create missing tables only; never alter/drop existing data
-      console.log('✅ Database models synchronized');
-    }
-    
+    // Create any missing tables. This never alters or drops existing tables/data.
+    // For schema changes on a live database, use proper migrations instead.
+    await sequelize.sync();
+    console.log('✅ Database models synchronized');
+
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);

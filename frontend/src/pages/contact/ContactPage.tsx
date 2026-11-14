@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Label } from '@/components/ui/Label'
+import { publicService } from '@/services/public.service'
 
 interface FormData {
   name: string
@@ -45,6 +46,7 @@ export function ContactPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
@@ -79,12 +81,22 @@ export function ContactPage() {
     if (!validateForm()) return
 
     setIsSubmitting(true)
+    setSubmitError('')
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    setIsSubmitting(false)
-    setIsSubmitted(true)
+    try {
+      await publicService.submitLead({
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        interest: formData.subject,
+        message: formData.message,
+      })
+      setIsSubmitted(true)
+    } catch {
+      setSubmitError('Sorry, we could not send your message. Please try again or email us directly.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (
@@ -236,6 +248,9 @@ export function ContactPage() {
             <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8">
               <h2 className="text-2xl font-bold text-white mb-6">Send a Message</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {submitError && (
+                  <p role="alert" className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{submitError}</p>
+                )}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="name">Name *</Label>

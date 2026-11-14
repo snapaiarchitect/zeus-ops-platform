@@ -105,8 +105,8 @@ export function Navigation() {
                     Sign In
                   </Button>
                 </Link>
-                <Link to="/register">
-                  <Button size="sm">Get Started</Button>
+                <Link to="/contact">
+                  <Button size="sm">Book a Call</Button>
                 </Link>
               </>
             )}
@@ -153,8 +153,8 @@ export function Navigation() {
                       Sign In
                     </Button>
                   </Link>
-                  <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full">Get Started</Button>
+                  <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full">Book a Call</Button>
                   </Link>
                 </div>
               )}

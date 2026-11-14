@@ -17,13 +17,18 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CLIENT_URL
-        value: https://zeus-ops-frontend.vercel.app
+        value: https://zeus-ops-frontend.onrender.com
 
   - type: web
     name: zeus-ops-frontend
     runtime: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
+    routes:
+      # Single-page app: serve index.html for client-side routes (e.g. /admin/leads)
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_URL
         value: https://zeus-ops-backend.onrender.com

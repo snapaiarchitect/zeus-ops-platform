@@ -52,16 +52,16 @@ export function AdminOverviewPage() {
     {
       title: 'Total Leads',
       value: stats?.totalLeads || 0,
-      change: '+12%',
-      changeType: 'positive',
+      change: `${stats?.newLeadsThisMonth || 0} new this month`,
+      changeType: 'neutral',
       icon: Users,
       color: 'cyan'
     },
     {
       title: 'Monthly Revenue',
       value: `$${(stats?.mrr || 0).toLocaleString()}`,
-      change: '+8%',
-      changeType: 'positive',
+      change: 'Active subscriptions',
+      changeType: 'neutral',
       icon: DollarSign,
       color: 'green'
     },
@@ -151,7 +151,7 @@ export function AdminOverviewPage() {
           <div className="space-y-4">
             {stats?.leadsByStatus?.map((status) => (
               <div key={status.status} className="flex items-center gap-4">
-                <div className="w-32 text-sm text-slate-400 capitalize">{status.status}</div>
+                <div className="w-32 text-sm text-slate-400 capitalize">{status.status.replace('_', ' ')}</div>
                 <div className="flex-1 h-8 bg-white/5 rounded-lg overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-lg transition-all duration-500"

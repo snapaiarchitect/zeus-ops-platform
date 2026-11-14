@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Navigation } from '@/components/Navigation'
+import { SampleContentNotice } from '@/components/SampleContentNotice'
 import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -208,6 +209,7 @@ export function CaseStudiesPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Navigation />
+      <SampleContentNotice />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16">
@@ -370,10 +372,10 @@ export function CaseStudiesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: '500+', label: 'Companies Transformed' },
-              { value: '$2.4B', label: 'Revenue Generated' },
-              { value: '10M+', label: 'Tasks Automated' },
-              { value: '99.9%', label: 'Uptime Guaranteed' },
+              { value: '48h', label: 'To First Deliverable' },
+              { value: '3', label: 'Service Tiers' },
+              { value: '25-150', label: 'Hours / Month' },
+              { value: '4h', label: 'Priority Support Response' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-3xl md:text-4xl font-bold text-cyan-400">{stat.value}</p>

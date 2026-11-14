@@ -14,6 +14,7 @@ import {
 import { Linkedin, Twitter } from '@/components/ui/BrandIcons'
 import { motion } from 'framer-motion'
 import { Navigation } from '@/components/Navigation'
+import { SampleContentNotice } from '@/components/SampleContentNotice'
 import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 
@@ -72,21 +73,14 @@ const team = [
 ]
 
 const stats = [
-  { value: '2022', label: 'Founded' },
-  { value: '150+', label: 'Team Members' },
-  { value: '500+', label: 'Customers' },
-  { value: '$12M', label: 'Funding Raised' },
+  { value: '48h', label: 'To First Deliverable' },
+  { value: '3', label: 'Service Tiers' },
+  { value: '25-150', label: 'Hours / Month' },
+  { value: '4h', label: 'Priority Support Response' },
 ]
 
-const milestones = [
-  { year: '2022', event: 'ZEUS OPS founded in San Francisco' },
-  { year: '2023', event: 'Launched AI Agent Platform v1.0' },
-  { year: '2023', event: 'First 100 enterprise customers' },
-  { year: '2024', event: 'Series A funding - $12M raised' },
-  { year: '2024', event: 'Opened London and Singapore offices' },
-  { year: '2025', event: 'Launched AI Agent Marketplace' },
-  { year: '2026', label: 'Today', event: 'Powering operations for 500+ companies' },
-]
+// TODO(owner): replace with ZEUS OPS's real company history before launch.
+const milestones: { year: string; event: string; label?: string }[] = []
 
 export function AboutPage() {
   const [activeTab, setActiveTab] = useState<'mission' | 'story' | 'values'>('mission')
@@ -94,6 +88,7 @@ export function AboutPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Navigation />
+      <SampleContentNotice />
 
       {/* Hero */}
       <section className="pt-32 pb-16">
@@ -196,6 +191,9 @@ export function AboutPage() {
                   {/* Timeline line */}
                   <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-slate-800 md:-translate-x-1/2" />
 
+                  {milestones.length === 0 && (
+                    <p className="relative text-center text-slate-400">Our story is coming soon.</p>
+                  )}
                   {milestones.map((milestone, index) => (
                     <div
                       key={milestone.year}
