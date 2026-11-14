@@ -100,8 +100,8 @@ Contact.init(
     indexes: [
       { fields: ['userId'] },
       { fields: ['company'] },
-      { fields: ['isClient'] },
-      { fields: ['tags'] }
+      { fields: ['isClient'] }
+      // no index on `tags`: it is a JSON column, which Postgres cannot btree-index
     ]
   }
 );
