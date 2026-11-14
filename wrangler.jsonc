@@ -1,0 +1,14 @@
+{
+  // Serves the React frontend as static assets (single-page app). The API runs separately (see render.yaml).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zeus-ops-platform",
+  "compatibility_date": "2026-11-01",
+  "build": {
+    // VITE_API_URL is baked in at build time; override it in the Workers Builds environment variables.
+    "command": "cd frontend && npm install && VITE_API_URL=\"${VITE_API_URL:-https://zeus-ops-backend.onrender.com}\" npm run build"
+  },
+  "assets": {
+    "directory": "./frontend/dist",
+    "not_found_handling": "single-page-application"
+  }
+}
