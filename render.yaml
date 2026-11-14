@@ -1,21 +1,29 @@
+# Mirrors the services that exist on Render today. The database is Supabase (see PROTOTYPE.md).
 services:
   - type: web
-    name: zeus-ops-backend
+    name: zeus-ops-platform
     runtime: node
-    plan: starter
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && npm start
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
-      - key: DATABASE_URL
-        sync: false   # Supabase pooler connection string; set in the Render dashboard
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL        # Supabase session-pooler connection string (IPv4)
+        sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: CLIENT_URL
+      - key: CLIENT_URL          # frontend origin(s), comma-separated, for CORS
         value: https://zeus-ops-frontend.onrender.com
+      - key: APP_URL
+        value: https://zeus-ops-frontend.onrender.com
+      - key: ADMIN_EMAIL         # first-admin bootstrap; remove ADMIN_PASSWORD after first login
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
 
   - type: web
     name: zeus-ops-frontend
@@ -23,10 +31,9 @@ services:
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     routes:
-      # Single-page app: serve index.html for client-side routes (e.g. /admin/leads)
       - type: rewrite
         source: /*
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://zeus-ops-backend.onrender.com
+        value: https://zeus-ops-platform.onrender.com

@@ -53,3 +53,9 @@ Render (`render.yaml`): static frontend + Node web service, with **Supabase** as
 2. In Render, set `DATABASE_URL` on `zeus-ops-backend` to that string. Never commit it.
 3. On first boot the server creates the tables and enables row-level security on all of them (no policies), so the Supabase Data API / anon key cannot read CRM data. The backend connects as the database owner and is unaffected.
 4. Auth stays on the app's own JWT login; Supabase Auth is intentionally not used.
+
+### Live deployment
+- Frontend: https://zeus-ops-frontend.onrender.com; API: https://zeus-ops-platform.onrender.com
+- Render auto-deploys `master` on every commit; GitHub Actions (`ci.yml`) builds both packages on every push/PR.
+- The API connects to Supabase as `zeus_app` (non-superuser) via the session pooler. Rotate with `ALTER ROLE zeus_app PASSWORD '...'` and update `DATABASE_URL` in Render.
+- First admin: set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (12+ chars) in Render; the server creates it once on boot if no admin exists. Delete `ADMIN_PASSWORD` afterwards.
