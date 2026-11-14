@@ -46,4 +46,10 @@ Sandbox only. Seed data is fictional (all `*-demo.test` companies). `npm run see
 4. `src/services/activity.ts` and `notifications.ts` are leftover Prisma-based code with no callers; they are excluded from the build. Delete or port them.
 
 ## Deployment decision
-Render only (`render.yaml`): static frontend + Node web service + managed Postgres. Before real data goes in, move Postgres off the starter plan, set `SENDGRID_API_KEY`, and set `CLIENT_URL` to the frontend origin (comma-separate several if needed). The Cloudflare Workers Builds integration is not used; disconnect it in the Cloudflare dashboard to clear the failing check.
+Render (`render.yaml`): static frontend + Node web service, with **Supabase** as the Postgres database (project `zeus-ops`, us-east-1). Before real data goes in, set `SENDGRID_API_KEY`, and set `CLIENT_URL` to the frontend origin (comma-separate several if needed). The Cloudflare Workers Builds integration is not used; disconnect it in the Cloudflare dashboard to clear the failing check.
+
+### Supabase setup
+1. In Supabase: Project `zeus-ops` > Connect > copy the **Session pooler** connection string (Render cannot reach the direct host, which is IPv6-only). Use the database password you set when the project was created (reset it under Project Settings > Database if needed).
+2. In Render, set `DATABASE_URL` on `zeus-ops-backend` to that string. Never commit it.
+3. On first boot the server creates the tables and enables row-level security on all of them (no policies), so the Supabase Data API / anon key cannot read CRM data. The backend connects as the database owner and is unaffected.
+4. Auth stays on the app's own JWT login; Supabase Auth is intentionally not used.

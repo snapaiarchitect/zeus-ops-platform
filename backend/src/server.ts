@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { sequelize } from './database/index.js';
+import { enableRowLevelSecurity } from './database/security.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -108,6 +109,8 @@ const startServer = async () => {
     // For schema changes on a live database, use proper migrations instead.
     await sequelize.sync();
     console.log('✅ Database models synchronized');
+    const secured = await enableRowLevelSecurity();
+    if (secured.length) console.log(`🔒 Row-level security enabled on ${secured.length} tables`);
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);

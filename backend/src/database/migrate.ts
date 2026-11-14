@@ -1,5 +1,6 @@
 import { sequelize } from './index.js';
 import '../models/index.js';
+import { enableRowLevelSecurity } from './security.js';
 
 // Creates / updates all tables from the Sequelize models.
 const force = process.argv.includes('--force');
@@ -7,6 +8,7 @@ const force = process.argv.includes('--force');
 try {
   await sequelize.authenticate();
   await sequelize.sync({ force, alter: !force });
+  await enableRowLevelSecurity();
   console.log(`✅ Migration complete${force ? ' (tables recreated)' : ''}`);
   process.exit(0);
 } catch (err) {
