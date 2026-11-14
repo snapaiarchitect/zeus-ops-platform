@@ -44,3 +44,6 @@ Sandbox only. Seed data is fictional (all `*-demo.test` companies). `npm run see
 2. **Frontend host**: `DEPLOY.md` says Vercel, `render.yaml` deploys a Render static site. `render.yaml` is now internally consistent (Render); if you use Vercel, add a `vercel.json` SPA rewrite and set `CLIENT_URL` accordingly.
 3. **Schema changes**: the server creates missing tables on boot (`sequelize.sync()`, never alters/drops). Adopt real migrations before changing columns on a live database.
 4. `src/services/activity.ts` and `notifications.ts` are leftover Prisma-based code with no callers; they are excluded from the build. Delete or port them.
+
+## Deployment decision
+Render only (`render.yaml`): static frontend + Node web service + managed Postgres. Before real data goes in, move Postgres off the starter plan, set `SENDGRID_API_KEY`, and set `CLIENT_URL` to the frontend origin (comma-separate several if needed). The Cloudflare Workers Builds integration is not used; disconnect it in the Cloudflare dashboard to clear the failing check.
