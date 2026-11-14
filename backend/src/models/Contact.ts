@@ -27,7 +27,7 @@ export interface ContactAttributes {
   updatedAt?: Date;
 }
 
-export interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'createdAt' | 'updatedAt' | 'tags' | 'isClient'> {}
 
 class Contact extends Model<ContactAttributes, ContactCreationAttributes> implements ContactAttributes {
   public id!: string;

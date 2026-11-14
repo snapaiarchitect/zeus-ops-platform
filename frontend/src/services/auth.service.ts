@@ -3,18 +3,18 @@ import type { User, LoginCredentials, RegisterData, AuthResponse } from '@/types
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/login', credentials)
-    return response.data
+    const { data } = await api.post<AuthResponse>('/auth/login', credentials)
+    return data
   },
 
-  async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/register', data)
-    return response.data
+  async register(payload: RegisterData): Promise<AuthResponse> {
+    const { data } = await api.post<AuthResponse>('/auth/register', payload)
+    return data
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await api.get<User>('/auth/me')
-    return response.data
+    const { data } = await api.get<{ user: User }>('/auth/me')
+    return data.user
   },
 
   async forgotPassword(email: string): Promise<void> {

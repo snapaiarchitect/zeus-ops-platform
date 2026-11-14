@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { bookingsService } from '@/services/bookings.service'
-import { Booking } from '@/types/booking'
+import type { Booking, BookingStatus } from '@/types/booking'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Calendar } from '@/components/ui/Calendar'
@@ -44,7 +44,7 @@ export function BookingsPage() {
 
   const loadBookings = async () => {
     try {
-      const data = await bookingsService.getAll(filterStatus || undefined)
+      const data = await bookingsService.getAll(filterStatus ? { status: filterStatus } : undefined)
       setBookings(data.bookings)
     } catch (error) {
       console.error('Failed to load bookings:', error)
@@ -55,7 +55,7 @@ export function BookingsPage() {
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
-      await bookingsService.updateStatus(bookingId, newStatus)
+      await bookingsService.updateStatus(bookingId, newStatus as BookingStatus)
       loadBookings()
     } catch (error) {
       console.error('Failed to update booking:', error)

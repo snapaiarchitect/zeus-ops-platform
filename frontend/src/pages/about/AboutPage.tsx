@@ -9,11 +9,9 @@ import {
   Globe,
   Award,
   ArrowRight,
-  Linkedin,
-  Twitter,
-  Github,
   Mail,
 } from 'lucide-react'
+import { Linkedin, Twitter } from '@/components/ui/BrandIcons'
 import { motion } from 'framer-motion'
 import { Navigation } from '@/components/Navigation'
 import { Footer } from '@/components/Footer'

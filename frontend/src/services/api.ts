@@ -35,3 +35,10 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+/** Drop empty-string / undefined / null fields so optional backend validators don't reject blank form inputs. */
+export function clean<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== '' && v !== undefined && v !== null)
+  ) as T
+}

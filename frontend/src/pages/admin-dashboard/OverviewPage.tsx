@@ -13,28 +13,7 @@ import {
   ArrowDownRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-
-interface DashboardStats {
-  totalLeads: number
-  newLeadsThisMonth: number
-  totalContacts: number
-  totalRevenue: number
-  mrr: number
-  activeTasks: number
-  pendingTasks: number
-  upcomingBookings: number
-  conversionRate: number
-  leadsByStatus: { status: string; count: number }[]
-  revenueByMonth: { month: string; amount: number }[]
-}
-
-interface RecentActivity {
-  id: string
-  type: string
-  description: string
-  user: { firstName: string; lastName: string }
-  createdAt: string
-}
+import type { DashboardSummary as DashboardStats, ActivityItem as RecentActivity } from '@/types/analytics'
 
 export function AdminOverviewPage() {
   const { user } = useAuth()
@@ -49,7 +28,7 @@ export function AdminOverviewPage() {
   const loadDashboardData = async () => {
     try {
       const [statsData, activityData] = await Promise.all([
-        analyticsService.getDashboard(),
+        analyticsService.getSummary(),
         analyticsService.getRecentActivity(10)
       ])
       setStats(statsData)

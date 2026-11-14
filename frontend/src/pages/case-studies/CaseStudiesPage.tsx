@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { CaseStudy } from '@/types/case-study'
 
-const caseStudies: CaseStudy[] = [
+export const caseStudies: CaseStudy[] = [
   {
     id: '1',
     title: 'Automating Customer Support at Scale',

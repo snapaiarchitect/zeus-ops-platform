@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { Op, Sequelize } from 'sequelize';
-import { Lead, Contact, Booking, Task, Activity } from '../models/index.js';
+import { Lead, Contact, Booking, Task, Activity, Subscription, User } from '../models/index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { truncDate, hoursBetweenExpr, ageDaysExpr } from '../database/dialect.js';
 
 const router = Router();
 
@@ -90,8 +91,8 @@ router.get(
     ]);
 
     // Calculate lead conversion rate
-    const closedWonLeads = leadsByStatus.find((s: any) => s.status === 'closed_won');
-    const closedLostLeads = leadsByStatus.find((s: any) => s.status === 'closed_lost');
+    const closedWonLeads: any = leadsByStatus.find((s: any) => s.status === 'closed_won');
+    const closedLostLeads: any = leadsByStatus.find((s: any) => s.status === 'closed_lost');
     const totalClosed = (parseInt(closedWonLeads?.count || 0) + parseInt(closedLostLeads?.count || 0));
     const conversionRate = totalClosed > 0
       ? (parseInt(closedWonLeads?.count || 0) / totalClosed * 100).toFixed(1)
@@ -165,12 +166,12 @@ router.get(
     const leadsByStatus = await Lead.findAll({
       attributes: [
         'status',
-        [Sequelize.fn('DATE_TRUNC', groupBy as string, Sequelize.col('created_at')), 'date'],
+        [truncDate(groupBy, 'createdAt'), 'date'],
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']
       ],
       where: { createdAt: { [Op.gte]: startDate } },
-      group: ['status', Sequelize.fn('DATE_TRUNC', groupBy as string, Sequelize.col('created_at'))],
-      order: [[Sequelize.fn('DATE_TRUNC', groupBy as string, Sequelize.col('created_at')), 'ASC']],
+      group: ['status', truncDate(groupBy, 'createdAt') as any],
+      order: [[truncDate(groupBy, 'createdAt') as any, 'ASC']],
       raw: true
     });
 
@@ -183,8 +184,8 @@ router.get(
     });
 
     // Average lead value
-    const avgLeadValue = await Lead.findOne({
-      attributes: [[Sequelize.fn('AVG', Sequelize.col('estimated_value')), 'avg']],
+    const avgLeadValue: any = await (Lead as any).findOne({
+      attributes: [[Sequelize.fn('AVG', Sequelize.col('estimatedValue')), 'avg']],
       where: {
         createdAt: { [Op.gte]: startDate },
         estimatedValue: { [Op.not]: null }
@@ -193,8 +194,8 @@ router.get(
     });
 
     // Total pipeline value
-    const pipelineValue = await Lead.findOne({
-      attributes: [[Sequelize.fn('SUM', Sequelize.col('estimated_value')), 'total']],
+    const pipelineValue: any = await (Lead as any).findOne({
+      attributes: [[Sequelize.fn('SUM', Sequelize.col('estimatedValue')), 'total']],
       where: {
         status: {
           [Op.notIn]: ['closed_won', 'closed_lost']
@@ -209,7 +210,7 @@ router.get(
     const responseTimeData = await Lead.findAll({
       attributes: [
         'status',
-        [Sequelize.fn('AVG', Sequelize.literal('EXTRACT(EPOCH FROM ("updated_at" - "created_at")) / 3600')), 'avgHours']
+        [Sequelize.fn('AVG', Sequelize.literal(hoursBetweenExpr)), 'avgHours']
       ],
       where: {
         createdAt: { [Op.gte]: startDate },
@@ -260,16 +261,16 @@ router.get(
     // Won deals over time
     const wonDeals = await Lead.findAll({
       attributes: [
-        [Sequelize.fn('DATE_TRUNC', groupBy as string, Sequelize.col('updated_at')), 'date'],
+        [truncDate(groupBy, 'updatedAt'), 'date'],
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'count'],
-        [Sequelize.fn('SUM', Sequelize.col('estimated_value')), 'value']
+        [Sequelize.fn('SUM', Sequelize.col('estimatedValue')), 'value']
       ],
       where: {
         status: 'closed_won',
         updatedAt: { [Op.gte]: startDate }
       },
-      group: [Sequelize.fn('DATE_TRUNC', groupBy as string, Sequelize.col('updated_at'))],
-      order: [[Sequelize.fn('DATE_TRUNC', groupBy as string, Sequelize.col('updated_at')), 'ASC']],
+      group: [truncDate(groupBy, 'updatedAt') as any],
+      order: [[truncDate(groupBy, 'updatedAt') as any, 'ASC']],
       raw: true
     });
 
@@ -278,7 +279,7 @@ router.get(
       attributes: [
         'source',
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'count'],
-        [Sequelize.fn('SUM', Sequelize.col('estimated_value')), 'value']
+        [Sequelize.fn('SUM', Sequelize.col('estimatedValue')), 'value']
       ],
       where: {
         status: 'closed_won',
@@ -302,8 +303,8 @@ router.get(
           updatedAt: { [Op.gte]: startDate }
         }
       }),
-      Lead.findOne({
-        attributes: [[Sequelize.fn('AVG', Sequelize.col('estimated_value')), 'avg']],
+      (Lead as any).findOne({
+        attributes: [[Sequelize.fn('AVG', Sequelize.col('estimatedValue')), 'avg']],
         where: {
           status: 'closed_won',
           updatedAt: { [Op.gte]: startDate }
@@ -317,8 +318,8 @@ router.get(
       where: { isClient: true }
     });
 
-    const avgLTV = await Contact.findOne({
-      attributes: [[Sequelize.fn('AVG', Sequelize.col('lifetime_value')), 'avg']],
+    const avgLTV: any = await (Contact as any).findOne({
+      attributes: [[Sequelize.fn('AVG', Sequelize.col('lifetimeValue')), 'avg']],
       where: { isClient: true, lifetimeValue: { [Op.not]: null } },
       raw: true
     });
@@ -331,7 +332,7 @@ router.get(
       overview: {
         totalWon,
         totalRevenue: totalRevenue || 0,
-        avgDealSize: avgDealSize?.avg ? parseFloat(avgDealSize.avg) : 0,
+        avgDealSize: (avgDealSize as any)?.avg ? parseFloat((avgDealSize as any).avg) : 0,
         totalClientLTV: totalLTV || 0,
         avgClientLTV: avgLTV?.avg ? parseFloat(avgLTV.avg) : 0
       },
@@ -360,11 +361,11 @@ router.get(
     // Get pipeline data for each stage
     const pipelineData = await Promise.all(
       pipelineStages.map(async (stage) => {
-        const stats = await Lead.findOne({
+        const stats: any = await (Lead as any).findOne({
           attributes: [
             [Sequelize.fn('COUNT', Sequelize.col('id')), 'count'],
-            [Sequelize.fn('SUM', Sequelize.col('estimated_value')), 'value'],
-            [Sequelize.fn('AVG', Sequelize.literal('EXTRACT(EPOCH FROM (NOW() - "created_at")) / 86400')), 'avgDays']
+            [Sequelize.fn('SUM', Sequelize.col('estimatedValue')), 'value'],
+            [Sequelize.fn('AVG', Sequelize.literal(ageDaysExpr)), 'avgDays']
           ],
           where: { status: stage },
           raw: true
@@ -421,6 +422,79 @@ router.get(
         winRate: parseFloat(winRate)
       }
     });
+  })
+);
+
+// GET /summary - Flat headline numbers used by the admin overview & analytics pages
+router.get(
+  '/summary',
+  authenticate,
+  requireRole('admin', 'operator'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+    const [totalLeads, newLeadsThisMonth, totalContacts, won, mrrRaw, activeTasks, pendingTasks, upcomingBookings, totalTasks, doneTasks] = await Promise.all([
+      Lead.count(),
+      Lead.count({ where: { createdAt: { [Op.gte]: monthStart } } }),
+      Contact.count(),
+      Lead.findAll({ where: { status: 'closed_won' }, raw: true }) as Promise<any[]>,
+      Subscription.sum('amount', { where: { status: 'active' } }),
+      Task.count({ where: { status: 'in_progress' } }),
+      Task.count({ where: { status: { [Op.in]: ['todo', 'review', 'blocked'] } } }),
+      Booking.count({ where: { status: 'scheduled', scheduledAt: { [Op.between]: [new Date(), new Date(Date.now() + 7 * 864e5)] } } }),
+      Task.count(),
+      Task.count({ where: { status: 'done' } }),
+    ]);
+    const totalRevenue = won.reduce((s, l) => s + Number(l.estimatedValue || 0), 0);
+    const closed = await Lead.count({ where: { status: { [Op.in]: ['closed_won', 'closed_lost'] } } });
+    const byStatusRows: any[] = (await Lead.findAll({ attributes: ['status', [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']], group: ['status'], raw: true })) as any[];
+    const byStatus = byStatusRows.map((r) => ({ status: r.status, count: Number(r.count), percentage: totalLeads ? Math.round((Number(r.count) / totalLeads) * 100) : 0 }));
+    const bySource: any[] = (await Lead.findAll({ attributes: ['source', [Sequelize.fn('COUNT', Sequelize.col('id')), 'count']], group: ['source'], raw: true })) as any[];
+
+    // Revenue (won deal value) grouped by month
+    const monthMap = new Map<string, number>();
+    for (const l of won) {
+      const key = new Date(l.updatedAt).toISOString().slice(0, 7);
+      monthMap.set(key, (monthMap.get(key) || 0) + Number(l.estimatedValue || 0));
+    }
+    const revenueByMonth = [...monthMap.entries()].sort().map(([month, revenue]) => ({ month, revenue, newMrr: 0, churnedMrr: 0 }));
+
+    const clients: any[] = (await Contact.findAll({ where: { isClient: true }, order: [['lifetimeValue', 'DESC']], limit: 5, raw: true })) as any[];
+    const topClients = clients.map((c) => ({ name: c.company || c.email, revenue: Number(c.lifetimeValue || 0) }));
+
+    const stages = ['new', 'contacted', 'qualified', 'proposal', 'negotiation'];
+    const open: any[] = (await Lead.findAll({ where: { status: { [Op.in]: stages } }, raw: true })) as any[];
+    const pipelineByStage = stages.map((stage) => {
+      const rows = open.filter((l) => l.status === stage);
+      return { stage, count: rows.length, value: rows.reduce((s, l) => s + Number(l.estimatedValue || 0), 0) };
+    });
+
+    res.json({
+      totalLeads, newLeadsThisMonth, totalContacts, totalRevenue,
+      mrr: Number(mrrRaw || 0), activeTasks, pendingTasks, upcomingBookings,
+      conversionRate: closed ? Math.round((won.length / closed) * 1000) / 10 : 0,
+      avgDealSize: won.length ? Math.round(totalRevenue / won.length) : 0,
+      leadsByStatus: byStatus,
+      leadsBySource: bySource.map((r) => ({ source: r.source, count: Number(r.count) })),
+      revenueByMonth, topClients,
+      pipelineValue: pipelineByStage.reduce((s, p) => s + p.value, 0), pipelineByStage,
+      taskStats: { total: totalTasks, completed: doneTasks, completionRate: totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0 },
+    });
+  })
+);
+
+// GET /activity - Recent activity feed with actor names
+router.get(
+  '/activity',
+  authenticate,
+  requireRole('admin', 'operator'),
+  asyncHandler(async (req: AuthRequest, res) => {
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit || '10'), 10)));
+    const activities = await Activity.findAll({
+      order: [['createdAt', 'DESC']],
+      limit,
+      include: [{ model: User, as: 'user', attributes: ['firstName', 'lastName'] }],
+    });
+    res.json({ activities });
   })
 );
 

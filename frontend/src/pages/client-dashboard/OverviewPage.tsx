@@ -14,24 +14,20 @@ import {
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { tasksService } from '@/services/tasks.service'
-import { analyticsService } from '@/services/analytics.service'
+import { billingService, type BillingSubscription } from '@/services/billing.service'
 import type { Task } from '@/types/task'
-import type { AnalyticsDashboard } from '@/types/analytics'
 
 export function ClientOverviewPage() {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [analytics, setAnalytics] = useState<AnalyticsDashboard | null>(null)
+  const [subscription, setSubscription] = useState<BillingSubscription | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [tasksData, analyticsData] = await Promise.all([
-          tasksService.getMyTasks(),
-          analyticsService.getDashboard('30d'),
-        ])
-        setTasks(tasksData.slice(0, 5))
-        setAnalytics(analyticsData)
+        const [tasksData, billing] = await Promise.all([tasksService.getMyTasks(), billingService.getOverview()])
+        setTasks(tasksData)
+        setSubscription(billing.subscription)
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
       } finally {
@@ -41,6 +37,7 @@ export function ClientOverviewPage() {
     loadData()
   }, [])
 
+  const recentTasks = [...tasks].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)).slice(0, 5)
   const pendingTasks = tasks.filter((t) => t.status !== 'done')
   const completedTasks = tasks.filter((t) => t.status === 'done')
 
@@ -62,17 +59,17 @@ export function ClientOverviewPage() {
       bgColor: 'bg-green-500/10',
     },
     {
-      label: 'Upcoming',
-      value: analytics?.upcomingBookings?.toString() || '0',
-      change: 'Bookings',
+      label: 'In Progress',
+      value: tasks.filter((t) => t.status === 'in_progress').length.toString(),
+      change: 'Being worked on',
       icon: Calendar,
       color: 'text-cyan-400',
       bgColor: 'bg-cyan-500/10',
     },
     {
       label: 'Next Bill',
-      value: '$149',
-      change: 'Due in 12 days',
+      value: subscription ? `$${Number(subscription.amount).toLocaleString()}` : '—',
+      change: subscription ? `Renews ${new Date(subscription.currentPeriodEnd).toLocaleDateString()}` : 'No active plan',
       icon: CreditCard,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/10',
@@ -219,19 +216,19 @@ export function ClientOverviewPage() {
 
           {/* Recent Activity */}
           <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Recent Activity</h2>
-            {analytics?.recentActivity?.length ? (
+            <h2 className="text-lg font-semibold text-white mb-4">Recent Updates</h2>
+            {recentTasks.length ? (
               <div className="space-y-4">
-                {analytics.recentActivity.slice(0, 5).map((activity) => (
+                {recentTasks.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3">
                     <div className="w-8 h-8 bg-cyan-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Clock className="w-4 h-4 text-cyan-500" />
                     </div>
                     <div>
                       <p className="text-white text-sm">{activity.title}</p>
-                      <p className="text-slate-400 text-xs">{activity.description}</p>
+                      <p className="text-slate-400 text-xs capitalize">{activity.status.replace('_', ' ')} · {activity.priority} priority</p>
                       <p className="text-slate-500 text-xs mt-1">
-                        {new Date(activity.timestamp).toLocaleString()}
+                        {new Date(activity.updatedAt).toLocaleString()}
                       </p>
                     </div>
                   </div>

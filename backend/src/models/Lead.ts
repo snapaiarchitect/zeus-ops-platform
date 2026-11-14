@@ -24,7 +24,7 @@ export interface LeadAttributes {
   updatedAt?: Date;
 }
 
-export interface LeadCreationAttributes extends Optional<LeadAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface LeadCreationAttributes extends Optional<LeadAttributes, 'id' | 'createdAt' | 'updatedAt' | 'tags' | 'source' | 'status' | 'priority'> {}
 
 class Lead extends Model<LeadAttributes, LeadCreationAttributes> implements LeadAttributes {
   public id!: string;

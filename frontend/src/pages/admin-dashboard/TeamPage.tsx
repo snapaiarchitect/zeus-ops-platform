@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { tasksService } from '@/services/tasks.service'
 import { analyticsService } from '@/services/analytics.service'
-import { Task } from '@/types/task'
-import { User } from '@/types/auth'
+import type { TeamMemberStats } from '@/types/analytics'
 import { Button } from '@/components/ui/Button'
 import { 
   Users, 
@@ -16,50 +13,7 @@ import {
   Mail
 } from 'lucide-react'
 
-// Mock team data - would come from API in production
-const TEAM_MEMBERS: User[] = [
-  {
-    id: '1',
-    email: 'alex@zeusops.com',
-    firstName: 'Alex',
-    lastName: 'Chen',
-    role: 'operator',
-    isActive: true,
-    createdAt: '2024-01-15'
-  },
-  {
-    id: '2',
-    email: 'sarah@zeusops.com',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    role: 'operator',
-    isActive: true,
-    createdAt: '2024-02-01'
-  },
-  {
-    id: '3',
-    email: 'mike@zeusops.com',
-    firstName: 'Mike',
-    lastName: 'Ross',
-    role: 'operator',
-    isActive: true,
-    createdAt: '2024-03-10'
-  }
-]
-
-interface TeamMemberStats {
-  user: User
-  totalTasks: number
-  completedTasks: number
-  inProgressTasks: number
-  overdueTasks: number
-  hoursLogged: number
-  efficiency: number
-  currentWorkload: Task[]
-}
-
 export function TeamPage() {
-  const { user } = useAuth()
   const [teamStats, setTeamStats] = useState<TeamMemberStats[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedMember, setSelectedMember] = useState<TeamMemberStats | null>(null)
@@ -70,19 +24,7 @@ export function TeamPage() {
 
   const loadTeamData = async () => {
     try {
-      // In production, fetch from API
-      const stats: TeamMemberStats[] = TEAM_MEMBERS.map(member => ({
-        user: member,
-        totalTasks: Math.floor(Math.random() * 30) + 10,
-        completedTasks: Math.floor(Math.random() * 20) + 5,
-        inProgressTasks: Math.floor(Math.random() * 8) + 1,
-        overdueTasks: Math.floor(Math.random() * 3),
-        hoursLogged: Math.floor(Math.random() * 120) + 40,
-        efficiency: Math.floor(Math.random() * 30) + 70,
-        currentWorkload: []
-      }))
-      
-      setTeamStats(stats)
+      setTeamStats(await analyticsService.getTeam())
     } catch (error) {
       console.error('Failed to load team data:', error)
     } finally {
@@ -97,6 +39,8 @@ export function TeamPage() {
     totalHours: teamStats.reduce((sum, m) => sum + m.hoursLogged, 0),
     avgEfficiency: Math.round(teamStats.reduce((sum, m) => sum + m.efficiency, 0) / (teamStats.length || 1))
   }
+
+  const pct = (n: number, d: number) => (d ? (n / d) * 100 : 0)
 
   const getWorkloadColor = (tasks: number) => {
     if (tasks < 5) return 'text-green-400'
@@ -126,7 +70,7 @@ export function TeamPage() {
         </div>
         <div className="bg-[#0f0f1b] border border-white/10 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-cyan-400">{teamTotals.totalTasks}</p>
-          <p className="text-xs text-slate-400 mt-1">Active Tasks</p>
+          <p className="text-xs text-slate-400 mt-1">Tasks Assigned</p>
         </div>
         <div className="bg-[#0f0f1b] border border-white/10 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-green-400">{teamTotals.completedTasks}</p>
@@ -134,7 +78,7 @@ export function TeamPage() {
         </div>
         <div className="bg-[#0f0f1b] border border-white/10 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-purple-400">{teamTotals.totalHours}</p>
-          <p className="text-xs text-slate-400 mt-1">Hours This Month</p>
+          <p className="text-xs text-slate-400 mt-1">Hours Logged</p>
         </div>
         <div className="bg-[#0f0f1b] border border-white/10 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-yellow-400">{teamTotals.avgEfficiency}%</p>
@@ -214,13 +158,13 @@ export function TeamPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-400">Task Completion</span>
                   <span className="text-white">
-                    {Math.round((member.completedTasks / member.totalTasks) * 100)}%
+                    {member.efficiency}%
                   </span>
                 </div>
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 rounded-full"
-                    style={{ width: `${(member.completedTasks / member.totalTasks) * 100}%` }}
+                    style={{ width: `${pct(member.completedTasks, member.totalTasks)}%` }}
                   />
                 </div>
               </div>
@@ -229,7 +173,7 @@ export function TeamPage() {
               <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-slate-400 text-sm">
                   <Calendar className="w-4 h-4" />
-                  Hours This Month
+                  Hours Logged
                 </div>
                 <span className="text-white font-medium">{member.hoursLogged}h</span>
               </div>
@@ -250,17 +194,17 @@ export function TeamPage() {
               <div className="flex-1 h-10 bg-white/5 rounded-lg overflow-hidden flex">
                 <div
                   className="h-full bg-green-500/60"
-                  style={{ width: `${(member.completedTasks / member.totalTasks) * 100}%` }}
+                  style={{ width: `${pct(member.completedTasks, member.totalTasks)}%` }}
                   title={`Completed: ${member.completedTasks}`}
                 />
                 <div
                   className="h-full bg-cyan-500/60"
-                  style={{ width: `${(member.inProgressTasks / member.totalTasks) * 100}%` }}
+                  style={{ width: `${pct(member.inProgressTasks, member.totalTasks)}%` }}
                   title={`In Progress: ${member.inProgressTasks}`}
                 />
                 <div
                   className="h-full bg-slate-500/40"
-                  style={{ width: `${((member.totalTasks - member.completedTasks - member.inProgressTasks) / member.totalTasks) * 100}%` }}
+                  style={{ width: `${pct(member.totalTasks - member.completedTasks - member.inProgressTasks, member.totalTasks)}%` }}
                   title={`Remaining: ${member.totalTasks - member.completedTasks - member.inProgressTasks}`}
                 />
               </div>

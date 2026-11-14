@@ -21,7 +21,7 @@ export interface BookingAttributes {
   updatedAt?: Date;
 }
 
-export interface BookingCreationAttributes extends Optional<BookingAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface BookingCreationAttributes extends Optional<BookingAttributes, 'id' | 'createdAt' | 'updatedAt' | 'timezone' | 'duration' | 'status' | 'followUpRequired'> {}
 
 class Booking extends Model<BookingAttributes, BookingCreationAttributes> implements BookingAttributes {
   public id!: string;

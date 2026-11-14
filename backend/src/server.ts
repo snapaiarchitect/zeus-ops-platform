@@ -16,6 +16,9 @@ import bookingRoutes from './routes/bookings.js';
 import taskRoutes from './routes/tasks.js';
 import analyticsRoutes from './routes/analytics.js';
 import webhookRoutes from './routes/webhooks.js';
+import teamRoutes from './routes/team.js';
+import billingRoutes from './routes/billing.js';
+import publicRoutes from './routes/public.js';
 
 dotenv.config();
 
@@ -32,7 +35,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 100 : 5000, // relaxed outside production
   message: { error: 'Too many requests, please try again later' }
 });
 app.use('/api/', limiter);
@@ -40,14 +43,18 @@ app.use('/api/', limiter);
 // Stricter rate limiting for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === 'production' ? 5 : 500,
   message: { error: 'Too many authentication attempts, please try again later' }
 });
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
+// Keep the raw body so webhook signatures can be verified.
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, _res, buf) => { (req as any).rawBody = buf; }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Logging
@@ -70,6 +77,9 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/team', teamRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/public', publicRoutes);
 app.use('/webhooks', webhookRoutes);
 
 // Error handling
@@ -88,7 +98,7 @@ const startServer = async () => {
     
     // Sync models (in production, use migrations instead)
     if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: true });
+      await sequelize.sync(); // create missing tables only; never alter/drop existing data
       console.log('✅ Database models synchronized');
     }
     

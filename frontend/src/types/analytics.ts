@@ -1,37 +1,39 @@
-export type TimeRange = '7d' | '30d' | '90d' | '1y'
-
-export interface AnalyticsDashboard {
+export interface DashboardSummary {
   totalLeads: number
-  newLeads: number
-  convertedLeads: number
-  conversionRate: number
+  newLeadsThisMonth: number
+  totalContacts: number
   totalRevenue: number
-  revenueChange: number
-  activeClients: number
-  tasksCompleted: number
+  mrr: number
+  activeTasks: number
+  pendingTasks: number
   upcomingBookings: number
-  recentActivity: ActivityItem[]
+  conversionRate: number
+  avgDealSize: number
+  leadsByStatus: { status: string; count: number; percentage: number }[]
+  leadsBySource: { source: string; count: number }[]
+  revenueByMonth: { month: string; revenue: number; newMrr: number; churnedMrr: number }[]
+  topClients: { name: string; revenue: number }[]
+  pipelineValue: number
+  pipelineByStage: { stage: string; value: number; count: number }[]
+  taskStats: { total: number; completed: number; completionRate: number }
 }
 
 export interface ActivityItem {
   id: string
-  type: 'lead' | 'contact' | 'booking' | 'task' | 'payment'
-  title: string
+  type: string
   description: string
-  timestamp: string
-  user?: string
+  createdAt: string
+  user?: { firstName: string; lastName: string }
 }
 
-export interface LeadAnalytics {
-  bySource: { source: string; count: number }[]
-  byStatus: { status: string; count: number }[]
-  timeline: { date: string; new: number; converted: number }[]
-  conversionFunnel: { stage: string; count: number; rate: number }[]
-}
-
-export interface RevenueAnalytics {
-  byMonth: { month: string; revenue: number; expenses: number }[]
-  byService: { service: string; revenue: number }[]
-  outstanding: number
-  projected: number
+export interface TeamMemberStats {
+  user: import('./auth').User
+  totalTasks: number
+  openTasks: number
+  completedTasks: number
+  inProgressTasks: number
+  overdueTasks: number
+  hoursLogged: number
+  efficiency: number
+  currentWorkload: import('./task').Task[]
 }

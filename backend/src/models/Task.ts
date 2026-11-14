@@ -22,7 +22,7 @@ export interface TaskAttributes {
   updatedAt?: Date;
 }
 
-export interface TaskCreationAttributes extends Optional<TaskAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface TaskCreationAttributes extends Optional<TaskAttributes, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'priority' | 'category' | 'tags' | 'attachments'> {}
 
 class Task extends Model<TaskAttributes, TaskCreationAttributes> implements TaskAttributes {
   public id!: string;

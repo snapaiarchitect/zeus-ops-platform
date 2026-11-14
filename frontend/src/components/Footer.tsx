@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Zap, Twitter, Linkedin, Github, Mail } from 'lucide-react'
+import { Zap, Mail } from 'lucide-react'
+import { Twitter, Linkedin, Github } from '@/components/ui/BrandIcons'
 
 const footerLinks = {
   product: [

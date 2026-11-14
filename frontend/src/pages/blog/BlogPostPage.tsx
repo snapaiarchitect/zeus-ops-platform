@@ -4,11 +4,9 @@ import {
   Clock,
   User,
   Share2,
-  Twitter,
-  Linkedin,
-  Facebook,
   Bookmark,
 } from 'lucide-react'
+import { Twitter, Linkedin, Facebook } from '@/components/ui/BrandIcons'
 import { motion } from 'framer-motion'
 import { Navigation } from '@/components/Navigation'
 import { Footer } from '@/components/Footer'

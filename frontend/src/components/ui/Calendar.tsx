@@ -14,6 +14,9 @@ interface CalendarEvent {
 
 interface CalendarProps {
   events?: CalendarEvent[]
+  /** Controlled selected date (optional). */
+  selected?: Date
+  onSelect?: (date: Date) => void
   onEventClick?: (event: CalendarEvent) => void
   onDateClick?: (date: Date) => void
   onAddEvent?: (date: Date) => void
@@ -22,13 +25,16 @@ interface CalendarProps {
 
 export function Calendar({
   events = [],
+  selected,
+  onSelect,
   onEventClick,
   onDateClick,
   onAddEvent,
   className,
 }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [internalSelected, setSelectedDate] = useState<Date | null>(null)
+  const selectedDate = selected ?? internalSelected
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(monthStart)
@@ -55,6 +61,7 @@ export function Calendar({
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date)
+    onSelect?.(date)
     onDateClick?.(date)
   }
 
@@ -117,7 +124,7 @@ export function Calendar({
               key={idx}
               onClick={() => handleDateClick(day)}
               className={cn(
-                'min-h-[100px] p-2 border-b border-r border-slate-700/50 cursor-pointer transition-colors',
+                'min-h-[72px] p-2 border-b border-r border-slate-700/50 cursor-pointer transition-colors',
                 !isCurrentMonth && 'bg-slate-900/30 text-slate-600',
                 isCurrentMonth && 'bg-slate-800/20 hover:bg-slate-800/40',
                 isSelected && 'bg-cyan-500/10 ring-1 ring-cyan-500/50',

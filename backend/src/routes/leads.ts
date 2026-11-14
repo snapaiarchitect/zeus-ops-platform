@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
+import { likeOp, tagsAny } from '../database/dialect.js';
 import { validationResult } from 'express-validator';
 import { Lead, User, Activity } from '../models/index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
@@ -44,16 +45,16 @@ router.get(
     }
     if (tags) {
       const tagArray = Array.isArray(tags) ? tags : [tags];
-      where.tags = { [Op.overlap]: tagArray };
+      Object.assign(where, tagsAny(tagArray as string[]));
     }
 
     // Search across email, firstName, lastName, company
     if (search) {
       where[Op.or] = [
-        { email: { [Op.iLike]: `%${search}%` } },
-        { firstName: { [Op.iLike]: `%${search}%` } },
-        { lastName: { [Op.iLike]: `%${search}%` } },
-        { company: { [Op.iLike]: `%${search}%` } }
+        { email: { [likeOp]: `%${search}%` } },
+        { firstName: { [likeOp]: `%${search}%` } },
+        { lastName: { [likeOp]: `%${search}%` } },
+        { company: { [likeOp]: `%${search}%` } }
       ];
     }
 

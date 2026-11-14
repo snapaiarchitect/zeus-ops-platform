@@ -65,7 +65,7 @@ export function Navigation() {
                   <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
                     <User className="w-4 h-4 text-cyan-400" />
                   </div>
-                  <span className="text-sm">{user?.name}</span>
+                  <span className="text-sm">{user?.firstName} {user?.lastName}</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
 

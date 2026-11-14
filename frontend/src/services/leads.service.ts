@@ -1,38 +1,24 @@
-import { api } from './api'
-import type { Lead, LeadStatus, CreateLeadData, UpdateLeadData } from '@/types/crm'
+import { api, clean } from './api'
+import type { Lead, LeadInput, LeadFilters, Pagination } from '@/types/crm'
 
 export const leadsService = {
-  async getAll(params?: { status?: LeadStatus; search?: string }): Promise<Lead[]> {
-    const response = await api.get<Lead[]>('/leads', { params })
-    return response.data
+  async getAll(params?: LeadFilters): Promise<{ leads: Lead[]; pagination: Pagination }> {
+    const { data } = await api.get('/leads', { params: { limit: 100, ...params } })
+    return data
   },
-
   async getById(id: string): Promise<Lead> {
-    const response = await api.get<Lead>(`/leads/${id}`)
-    return response.data
+    const { data } = await api.get<{ lead: Lead }>(`/leads/${id}`)
+    return data.lead
   },
-
-  async create(data: CreateLeadData): Promise<Lead> {
-    const response = await api.post<Lead>('/leads', data)
-    return response.data
+  async create(input: LeadInput): Promise<Lead> {
+    const { data } = await api.post<{ lead: Lead }>('/leads', clean(input))
+    return data.lead
   },
-
-  async update(id: string, data: UpdateLeadData): Promise<Lead> {
-    const response = await api.patch<Lead>(`/leads/${id}`, data)
-    return response.data
+  async update(id: string, input: Partial<LeadInput>): Promise<Lead> {
+    const { data } = await api.patch<{ lead: Lead }>(`/leads/${id}`, clean(input))
+    return data.lead
   },
-
   async delete(id: string): Promise<void> {
     await api.delete(`/leads/${id}`)
-  },
-
-  async updateStatus(id: string, status: LeadStatus): Promise<Lead> {
-    const response = await api.patch<Lead>(`/leads/${id}/status`, { status })
-    return response.data
-  },
-
-  async getPipeline(): Promise<{ status: LeadStatus; leads: Lead[]; count: number }[]> {
-    const response = await api.get('/leads/pipeline')
-    return response.data
   },
 }

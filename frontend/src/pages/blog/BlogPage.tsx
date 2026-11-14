@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { BlogPost } from '@/types/blog'
 
-const blogPosts: BlogPost[] = [
+export const blogPosts: BlogPost[] = [
   {
     id: '1',
     slug: 'ai-agents-future-of-work',

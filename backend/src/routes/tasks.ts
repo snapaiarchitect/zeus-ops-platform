@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
+import { likeOp, tagsAny } from '../database/dialect.js';
 import { body, validationResult } from 'express-validator';
 import { Task, User, Lead, Activity } from '../models/index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
@@ -85,14 +86,14 @@ router.get(
     }
     if (tags) {
       const tagArray = Array.isArray(tags) ? tags : [tags];
-      where.tags = { [Op.overlap]: tagArray };
+      Object.assign(where, tagsAny(tagArray as string[]));
     }
 
     // Search in title and description
     if (search) {
       where[Op.or] = [
-        { title: { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } }
+        { title: { [likeOp]: `%${search}%` } },
+        { description: { [likeOp]: `%${search}%` } }
       ];
     }
 
@@ -106,7 +107,7 @@ router.get(
     if (sortBy === 'priority') {
       order.push([
         Task.sequelize!.literal(
-          `CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END`
+          `CASE "Task"."priority" WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END`
         ),
         sortOrder === 'asc' ? 'ASC' : 'DESC'
       ]);
@@ -316,7 +317,7 @@ router.patch(
 
     // Log activity
     if (req.user) {
-      let activityType = 'task_created';
+      let activityType: any = 'task_created';
       let description = `Task updated: ${task.title}`;
 
       if (newStatus === 'done' && oldStatus !== 'done') {
@@ -462,7 +463,47 @@ router.post(
   })
 );
 
-// GET /my-tasks - Get current user's assigned tasks
+// ---- Client-scoped task endpoints (clients see/create only their own work requests) ----
+
+// POST /my - Client creates a request for the ZEUS team
+router.post(
+  '/my',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { title, description, priority, dueDate } = req.body;
+    if (!title || !String(title).trim()) throw new AppError('Title is required', 400);
+    if (priority && !['low', 'medium', 'high', 'urgent'].includes(priority)) throw new AppError('Invalid priority', 400);
+    const task = await Task.create({
+      userId: req.user!.id,
+      clientId: req.user!.id,
+      title: String(title).trim().slice(0, 500),
+      description,
+      priority: priority || 'medium',
+      category: 'client_work',
+      status: 'todo',
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      tags: [],
+      attachments: []
+    });
+    res.status(201).json({ message: 'Request submitted', task });
+  })
+);
+
+// PATCH /my/:id/status - Client updates status on their own task only
+router.patch(
+  '/my/:id/status',
+  authenticate,
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { status } = req.body;
+    if (!['todo', 'in_progress', 'review', 'done', 'blocked'].includes(status)) throw new AppError('Invalid status', 400);
+    const task = await Task.findOne({ where: { id: req.params.id, clientId: req.user!.id } });
+    if (!task) throw new AppError('Task not found', 404);
+    await task.update({ status, completedAt: status === 'done' ? new Date() : undefined });
+    res.json({ message: 'Status updated', task });
+  })
+);
+
+// GET /my/tasks - Tasks assigned to me, or (for clients) raised by me
 router.get(
   '/my/tasks',
   authenticate,
@@ -474,7 +515,7 @@ router.get(
     const { status, page = '1', limit = '20' } = req.query;
 
     const where: any = {
-      assignedTo: req.user.id
+      [Op.or]: [{ assignedTo: req.user.id }, { clientId: req.user.id }]
     };
 
     if (status) {
@@ -497,7 +538,7 @@ router.get(
       order: [
         [
           Task.sequelize!.literal(
-            `CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END`
+            `CASE "Task"."priority" WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END`
           ),
           'ASC'
         ],

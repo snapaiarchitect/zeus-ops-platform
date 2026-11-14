@@ -1,5 +1,5 @@
 import sgMail from '@sendgrid/mail';
-import { User, Booking, Task, Lead } from '../types';
+import { User, Booking, Task, Lead } from '../types/index.js';
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@zeus-ops.com';
@@ -47,7 +47,7 @@ export async function sendWelcomeEmail(user: User): Promise<void> {
     subject: 'Welcome to ZEUS OPS',
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #00d4ff;">Welcome to ZEUS OPS, ${user.name}!</h1>
+        <h1 style="color: #00d4ff;">Welcome to ZEUS OPS, ${user.firstName} ${user.lastName}!</h1>
         <p>Your account has been successfully created. You're now ready to streamline your operations.</p>
         <a href="${APP_URL}/dashboard" 
            style="display: inline-block; background: #00d4ff; color: #0a0a0a; 
@@ -77,16 +77,16 @@ export async function sendBookingConfirmation(
   const msg = {
     to: user.email,
     from: FROM_EMAIL,
-    subject: `Booking Confirmed: ${booking.title}`,
+    subject: `Booking Confirmed: ${`${booking.eventType} call`}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #00d4ff;">Booking Confirmed!</h1>
         <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h2 style="margin-top: 0; color: #fff;">${booking.title}</h2>
-          <p><strong>Date:</strong> ${new Date(booking.scheduledTime).toLocaleDateString()}</p>
-          <p><strong>Time:</strong> ${new Date(booking.scheduledTime).toLocaleTimeString()}</p>
-          ${booking.location ? `<p><strong>Location:</strong> ${booking.location}</p>` : ''}
-          ${booking.description ? `<p><strong>Description:</strong> ${booking.description}</p>` : ''}
+          <h2 style="margin-top: 0; color: #fff;">${`${booking.eventType} call`}</h2>
+          <p><strong>Date:</strong> ${new Date(booking.scheduledAt).toLocaleDateString()}</p>
+          <p><strong>Time:</strong> ${new Date(booking.scheduledAt).toLocaleTimeString()}</p>
+          ${booking.meetingUrl ? `<p><strong>Meeting link:</strong> ${booking.meetingUrl}</p>` : ''}
+          ${booking.notes ? `<p><strong>Description:</strong> ${booking.notes}</p>` : ''}
         </div>
         <p>Add to your calendar:</p>
         <a href="${APP_URL}/bookings/${booking.id}/calendar" 
@@ -212,20 +212,20 @@ export async function sendLeadNotification(
   const msg = {
     to: admin.email,
     from: FROM_EMAIL,
-    subject: `New Lead: ${lead.name} - ${lead.company || 'No Company'}`,
+    subject: `New Lead: ${`${lead.firstName ?? ''} ${lead.lastName ?? ''}`.trim() || lead.email} - ${lead.company || 'No Company'}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #00d4ff;">🎯 New Lead Captured!</h1>
         <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h2 style="margin-top: 0; color: #fff;">${lead.name}</h2>
+          <h2 style="margin-top: 0; color: #fff;">${`${lead.firstName ?? ''} ${lead.lastName ?? ''}`.trim() || lead.email}</h2>
           <p><strong>Email:</strong> <a href="mailto:${lead.email}" style="color: #00d4ff;">${lead.email}</a></p>
           ${lead.phone ? `<p><strong>Phone:</strong> ${lead.phone}</p>` : ''}
           ${lead.company ? `<p><strong>Company:</strong> ${lead.company}</p>` : ''}
           ${lead.source ? `<p><strong>Source:</strong> ${lead.source}</p>` : ''}
-          ${lead.message ? `
+          ${lead.notes ? `
             <div style="margin-top: 15px; padding: 15px; background: #0a0a0a; border-radius: 4px;">
               <strong>Message:</strong><br/>
-              <p style="margin: 10px 0 0 0; white-space: pre-wrap;">${lead.message}</p>
+              <p style="margin: 10px 0 0 0; white-space: pre-wrap;">${lead.notes}</p>
             </div>
           ` : ''}
           <p style="margin-top: 15px; font-size: 12px; color: #666;">

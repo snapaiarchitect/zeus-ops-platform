@@ -49,7 +49,7 @@ export function LeadsPage() {
     company: '',
     phone: '',
     status: 'new' as LeadStatus,
-    priority: 'medium' as const,
+    priority: 'medium' as 'low' | 'medium' | 'high',
     estimatedValue: '',
     notes: ''
   })
@@ -262,7 +262,7 @@ export function LeadsPage() {
       ) : viewMode === 'kanban' ? (
         <KanbanBoard
           columns={kanbanColumns}
-          onMoveItem={handleStatusChange}
+          onMoveItem={(id, toColumn) => handleStatusChange(id, toColumn as LeadStatus)}
           renderItem={(lead) => (
             <div className="p-4 bg-[#0a0a0f] border border-white/10 rounded-lg hover:border-cyan-500/30 transition-all cursor-pointer">
               <div className="flex items-start justify-between mb-2">
