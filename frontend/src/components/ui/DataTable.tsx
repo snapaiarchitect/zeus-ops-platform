@@ -1,11 +1,12 @@
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
-import { Button } from './Button'
 
-interface Column<T> {
+export interface Column<T> {
   key: string
-  title: string
+  /** Column heading (`title` is accepted as an alias). */
+  header?: React.ReactNode
+  title?: React.ReactNode
   sortable?: boolean
   render?: (item: T) => React.ReactNode
 }
@@ -21,7 +22,7 @@ interface DataTableProps<T> {
 
 type SortDirection = 'asc' | 'desc' | null
 
-export function DataTable<T>({
+export function DataTable<T extends object>({
   data,
   columns,
   keyExtractor,
@@ -50,10 +51,12 @@ export function DataTable<T>({
     if (!sortColumn || !sortDirection) return data
 
     return [...data].sort((a, b) => {
-      const aValue = (a as Record<string, unknown>)[sortColumn]
-      const bValue = (b as Record<string, unknown>)[sortColumn]
+      const aValue = (a as Record<string, unknown>)[sortColumn] as string | number | null | undefined
+      const bValue = (b as Record<string, unknown>)[sortColumn] as string | number | null | undefined
 
       if (aValue === bValue) return 0
+      if (aValue == null) return 1
+      if (bValue == null) return -1
 
       const comparison = aValue < bValue ? -1 : 1
       return sortDirection === 'asc' ? comparison : -comparison
@@ -106,11 +109,11 @@ export function DataTable<T>({
                       onClick={() => handleSort(column.key)}
                       className="flex items-center hover:text-cyan-400 transition-colors"
                     >
-                      {column.title}
+                      {column.header ?? column.title}
                       <SortIcon column={column.key} />
                     </button>
                   ) : (
-                    column.title
+                    (column.header ?? column.title)
                   )}
                 </th>
               ))}

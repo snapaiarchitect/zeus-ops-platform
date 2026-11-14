@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Zap,
@@ -17,12 +17,14 @@ import { Navigation } from '@/components/Navigation'
 import { Footer } from '@/components/Footer'
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel'
 import { Button } from '@/components/ui/Button'
+import { pricingTiers } from '@/pages/pricing/PricingPage'
+import { publicService, type PublicTestimonial } from '@/services/public.service'
 
 const features = [
   {
     icon: Bot,
     title: 'AI Automation',
-    description: 'Deploy autonomous agents that handle repetitive tasks 24/7. From lead qualification to customer support.',
+    description: 'We identify, build and run the AI workflows that take repetitive work off your team\u2019s plate.',
   },
   {
     icon: Workflow,
@@ -36,13 +38,13 @@ const features = [
   },
   {
     icon: Shield,
-    title: 'Enterprise Security',
-    description: 'SOC 2 Type II certified. End-to-end encryption, audit logs, and granular access controls.',
+    title: 'Secure by Design',
+    description: 'Role-based access, token authentication and a full activity log across your workspace.',
   },
   {
     icon: Clock,
-    title: 'Always On',
-    description: 'Your operations never sleep. 99.99% uptime SLA with distributed infrastructure.',
+    title: 'Predictable Cadence',
+    description: 'A predictable weekly rhythm: Monday status, Wednesday check-in, Friday summary report.',
   },
   {
     icon: Sparkles,
@@ -52,46 +54,10 @@ const features = [
 ]
 
 const stats = [
-  { value: '10M+', label: 'Tasks Automated' },
-  { value: '500+', label: 'Active Companies' },
-  { value: '99.9%', label: 'Uptime SLA' },
-  { value: '3.5x', label: 'Avg ROI Increase' },
-]
-
-const testimonials = [
-  {
-    id: '1',
-    quote: "ZEUS OPS transformed our operations. We've reduced manual work by 80% and our team can finally focus on strategy.",
-    author: 'Sarah Chen',
-    role: 'VP of Operations',
-    company: 'TechCorp Inc.',
-    rating: 5,
-  },
-  {
-    id: '2',
-    quote: "The AI agents handle our entire lead qualification process. It's like having a team of SDRs that never sleep.",
-    author: 'Marcus Johnson',
-    role: 'Chief Revenue Officer',
-    company: 'GrowthLabs',
-    rating: 5,
-  },
-  {
-    id: '3',
-    quote: "We tried three other platforms before finding ZEUS. Nothing else comes close in terms of flexibility and power.",
-    author: 'Elena Rodriguez',
-    role: 'Founder & CEO',
-    company: 'ScaleUp Ventures',
-    rating: 5,
-  },
-]
-
-const socialProof = [
-  'TechCrunch',
-  'Forbes',
-  'Wired',
-  'The Information',
-  'Bloomberg',
-  'VentureBeat',
+  { value: '48h', label: 'To First Deliverable' },
+  { value: '3', label: 'Service Tiers' },
+  { value: '25-150', label: 'Hours / Month' },
+  { value: '4h', label: 'Priority Support Response' },
 ]
 
 function AnimatedSection({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -112,6 +78,11 @@ function AnimatedSection({ children, className }: { children: React.ReactNode; c
 }
 
 export function LandingPage() {
+  const [testimonials, setTestimonials] = useState<PublicTestimonial[]>([])
+  useEffect(() => {
+    publicService.getTestimonials().then(setTestimonials).catch(() => setTestimonials([]))
+  }, [])
+
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Navigation />
@@ -133,7 +104,7 @@ export function LandingPage() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-8">
               <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm text-cyan-400">New: AI Agent Marketplace</span>
+              <span className="text-sm text-cyan-400">Fractional AI operations team</span>
               <ArrowRight className="w-4 h-4 text-cyan-400" />
             </div>
 
@@ -144,33 +115,22 @@ export function LandingPage() {
             </h1>
 
             <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
-              Deploy autonomous AI agents that handle your operations 24/7.
-              From lead management to task automation, let AI do the work.
+              Your fractional AI operations team. We find the highest-value AI opportunities,
+              build them, and run them with you.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link to="/register">
+              <Link to="/contact">
                 <Button size="lg" className="gap-2">
                   <Zap className="w-5 h-5" />
-                  Start Free Trial
+                  Book a Discovery Call
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="gap-2">
-                <Play className="w-5 h-5" />
-                Watch Demo
-              </Button>
-            </div>
-
-            {/* Social Proof */}
-            <div className="border-t border-slate-800 pt-8">
-              <p className="text-sm text-slate-500 mb-4">Featured in</p>
-              <div className="flex flex-wrap justify-center gap-8">
-                {socialProof.map((name) => (
-                  <span key={name} className="text-slate-600 font-semibold">
-                    {name}
-                  </span>
-                ))}
-              </div>
+              <Link to="/pricing">
+                <Button variant="outline" size="lg" className="gap-2">
+                  See Pricing
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -261,7 +221,7 @@ export function LandingPage() {
             </h2>
           </AnimatedSection>
 
-          <TestimonialsCarousel testimonials={testimonials} />
+          {testimonials.length > 0 && <TestimonialsCarousel testimonials={testimonials} />}
         </div>
       </section>
 
@@ -274,40 +234,12 @@ export function LandingPage() {
               <span className="text-gradient"> Pricing</span>
             </h2>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Start free, scale as you grow. No hidden fees, no surprises.
+              Three monthly tiers. Every engagement starts with a 48-hour onboarding sprint.
             </p>
           </AnimatedSection>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                name: 'Starter',
-                price: '$49',
-                period: '/month',
-                description: 'Perfect for small teams getting started',
-                features: ['5 AI Agents', '1,000 tasks/month', 'Basic analytics', 'Email support'],
-                cta: 'Start Free Trial',
-                popular: false,
-              },
-              {
-                name: 'Professional',
-                price: '$149',
-                period: '/month',
-                description: 'For growing teams with advanced needs',
-                features: ['20 AI Agents', '10,000 tasks/month', 'Advanced analytics', 'Priority support', 'Custom workflows'],
-                cta: 'Start Free Trial',
-                popular: true,
-              },
-              {
-                name: 'Enterprise',
-                price: 'Custom',
-                period: '',
-                description: 'For organizations at scale',
-                features: ['Unlimited AI Agents', 'Unlimited tasks', 'Custom integrations', 'Dedicated support', 'SLA guarantees'],
-                cta: 'Contact Sales',
-                popular: false,
-              },
-            ].map((plan, index) => (
+            {pricingTiers.map((plan, index) => (
               <motion.div
                 key={plan.name}
                 initial={{ opacity: 0, y: 20 }}
@@ -345,12 +277,11 @@ export function LandingPage() {
                   ))}
                 </ul>
 
-                <Button
-                  className="w-full"
-                  variant={plan.popular ? 'default' : 'outline'}
-                >
-                  {plan.cta}
-                </Button>
+                <Link to="/contact">
+                  <Button className="w-full" variant={plan.popular ? 'default' : 'outline'}>
+                    {plan.cta}
+                  </Button>
+                </Link>
               </motion.div>
             ))}
           </div>
@@ -370,22 +301,22 @@ export function LandingPage() {
 
             <div className="relative z-10">
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-                Ready to Transform Your Operations?
+                Ready to put AI to work in your operations?
               </h2>
               <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-                Join 500+ companies already using ZEUS OPS to automate their workflows and scale faster.
+                Book a discovery call and get your first AI opportunity assessment within 48 hours of kickoff.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/register">
+                <Link to="/contact">
                   <Button size="lg" className="gap-2">
                     <Zap className="w-5 h-5" />
-                    Get Started Free
+                    Book a Discovery Call
                   </Button>
                 </Link>
-                <Link to="/contact">
+                <Link to="/pricing">
                   <Button variant="outline" size="lg">
-                    Talk to Sales
+                    See Pricing
                   </Button>
                 </Link>
               </div>

@@ -1,11 +1,15 @@
+export type UserRole = 'client' | 'operator' | 'admin'
+
 export interface User {
   id: string
   email: string
-  name: string
-  role: 'client' | 'admin'
+  firstName: string
+  lastName: string
+  role: UserRole
   avatar?: string
   company?: string
   phone?: string
+  isActive?: boolean
   createdAt: string
 }
 
@@ -15,7 +19,8 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  name: string
+  firstName: string
+  lastName: string
   email: string
   password: string
   company?: string

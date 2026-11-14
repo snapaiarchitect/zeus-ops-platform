@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
+import { likeOp, tagsAny } from '../database/dialect.js';
 import { body, validationResult } from 'express-validator';
 import { Contact, User, Activity } from '../models/index.js';
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth.js';
@@ -84,21 +85,21 @@ router.get(
       where.isClient = isClient === 'true';
     }
     if (company) {
-      where.company = { [Op.iLike]: `%${company}%` };
+      where.company = { [likeOp]: `%${company}%` };
     }
     if (tags) {
       const tagArray = Array.isArray(tags) ? tags : [tags];
-      where.tags = { [Op.overlap]: tagArray };
+      Object.assign(where, tagsAny(tagArray as string[]));
     }
 
     // Search across email, firstName, lastName, company, jobTitle
     if (search) {
       where[Op.or] = [
-        { email: { [Op.iLike]: `%${search}%` } },
-        { firstName: { [Op.iLike]: `%${search}%` } },
-        { lastName: { [Op.iLike]: `%${search}%` } },
-        { company: { [Op.iLike]: `%${search}%` } },
-        { jobTitle: { [Op.iLike]: `%${search}%` } }
+        { email: { [likeOp]: `%${search}%` } },
+        { firstName: { [likeOp]: `%${search}%` } },
+        { lastName: { [likeOp]: `%${search}%` } },
+        { company: { [likeOp]: `%${search}%` } },
+        { jobTitle: { [likeOp]: `%${search}%` } }
       ];
     }
 

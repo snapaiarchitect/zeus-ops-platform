@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { User, Subscription, Invoice } from '../types';
+import { User, Subscription, Invoice } from '../types/index.js';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -8,7 +8,7 @@ let stripe: Stripe | null = null;
 
 if (STRIPE_SECRET_KEY) {
   stripe = new Stripe(STRIPE_SECRET_KEY, {
-    apiVersion: '2024-04-10',
+    apiVersion: '2024-06-20',
   });
 }
 
@@ -53,7 +53,7 @@ export async function createCustomer(user: User): Promise<CreateCustomerResult> 
   const customer = await withRetry(() =>
     stripe!.customers.create({
       email: user.email,
-      name: user.name,
+      name: `${user.firstName} ${user.lastName}`,
       metadata: {
         userId: user.id,
       },
@@ -242,7 +242,7 @@ export interface InvoiceData {
   amountDue: number;
   amountPaid: number;
   currency: string;
-  status: Stripe.Invoice.Status;
+  status: Stripe.Invoice.Status | null;
   created: number;
   periodStart: number;
   periodEnd: number;
@@ -290,7 +290,7 @@ export async function getUpcomingInvoice(customerId: string): Promise<InvoiceDat
     );
 
     return {
-      id: invoice.id,
+      id: 'upcoming',
       amountDue: invoice.amount_due,
       amountPaid: invoice.amount_paid,
       currency: invoice.currency,

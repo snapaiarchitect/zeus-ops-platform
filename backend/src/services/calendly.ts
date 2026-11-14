@@ -1,4 +1,4 @@
-import { Booking, User } from '../types';
+import { Booking, User } from '../types/index.js';
 
 const CALENDLY_API_KEY = process.env.CALENDLY_API_KEY || '';
 const CALENDLY_BASE_URL = 'https://api.calendly.com';
@@ -98,7 +98,7 @@ async function calendlyRequest<T>(
     throw new Error(`Calendly API error: ${response.status} ${error}`);
   }
 
-  return response.json();
+  return (await response.json()) as T;
 }
 
 async function getCurrentUserUri(): Promise<string> {

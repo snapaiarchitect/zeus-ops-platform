@@ -14,12 +14,13 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Navigation } from '@/components/Navigation'
+import { SampleContentNotice } from '@/components/SampleContentNotice'
 import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { BlogPost } from '@/types/blog'
 
-const blogPosts: BlogPost[] = [
+export const blogPosts: BlogPost[] = [
   {
     id: '1',
     slug: 'ai-agents-future-of-work',
@@ -149,6 +150,7 @@ export function BlogPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Navigation />
+      <SampleContentNotice />
 
       {/* Hero */}
       <section className="pt-32 pb-16">

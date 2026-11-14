@@ -4,13 +4,12 @@ import {
   Clock,
   User,
   Share2,
-  Twitter,
-  Linkedin,
-  Facebook,
   Bookmark,
 } from 'lucide-react'
+import { Twitter, Linkedin, Facebook } from '@/components/ui/BrandIcons'
 import { motion } from 'framer-motion'
 import { Navigation } from '@/components/Navigation'
+import { SampleContentNotice } from '@/components/SampleContentNotice'
 import { Footer } from '@/components/Footer'
 import { Button } from '@/components/ui/Button'
 import { blogPosts } from './BlogPage'
@@ -70,6 +69,7 @@ export function BlogPostPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <Navigation />
+      <SampleContentNotice />
 
       {/* Back Navigation */}
       <div className="pt-24 pb-4">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { analyticsService } from '@/services/analytics.service'
+import type { DashboardSummary } from '@/types/analytics'
 import { Button } from '@/components/ui/Button'
 import { 
   TrendingUp, 
@@ -12,66 +13,17 @@ import {
   Download
 } from 'lucide-react'
 
-interface AnalyticsData {
-  overview: {
-    totalLeads: number
-    totalContacts: number
-    totalRevenue: number
-    mrr: number
-    conversionRate: number
-    avgDealSize: number
-  }
-  leadsByStatus: { status: string; count: number; percentage: number }[]
-  leadsBySource: { source: string; count: number }[]
-  revenueByMonth: { month: string; revenue: number; newMrr: number; churnedMrr: number }[]
-  pipelineValue: number
-  pipelineByStage: { stage: string; value: number; count: number }[]
-  topClients: { name: string; revenue: number; growth: number }[]
-  taskStats: {
-    total: number
-    completed: number
-    completionRate: number
-    avgCompletionTime: number
-  }
-}
-
 export function AnalyticsPage() {
-  const [data, setData] = useState<AnalyticsData | null>(null)
+  const [data, setData] = useState<DashboardSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [dateRange, setDateRange] = useState('30d')
 
   useEffect(() => {
     loadAnalytics()
-  }, [dateRange])
+  }, [])
 
   const loadAnalytics = async () => {
     try {
-      const [overview, leads, revenue, pipeline] = await Promise.all([
-        analyticsService.getDashboard(),
-        analyticsService.getLeads(),
-        analyticsService.getRevenue(),
-        analyticsService.getPipeline()
-      ])
-      
-      setData({
-        overview,
-        ...leads,
-        ...revenue,
-        ...pipeline,
-        topClients: [
-          { name: 'Acme Corp', revenue: 45000, growth: 23 },
-          { name: 'TechStart Inc', revenue: 32000, growth: 45 },
-          { name: 'Global Systems', revenue: 28000, growth: -5 },
-          { name: 'Innovate Labs', revenue: 24000, growth: 67 },
-          { name: 'Future Dynamics', revenue: 19000, growth: 12 }
-        ],
-        taskStats: {
-          total: 127,
-          completed: 89,
-          completionRate: 70,
-          avgCompletionTime: 2.3
-        }
-      })
+      setData(await analyticsService.getSummary())
     } catch (error) {
       console.error('Failed to load analytics:', error)
     } finally {
@@ -87,33 +39,45 @@ export function AnalyticsPage() {
     )
   }
 
+  const exportCsv = () => {
+    if (!data) return
+    const rows = [
+      ['metric', 'value'],
+      ['total_leads', data.totalLeads], ['total_revenue', data.totalRevenue], ['mrr', data.mrr],
+      ['conversion_rate_pct', data.conversionRate], ['pipeline_value', data.pipelineValue],
+      ...data.pipelineByStage.map((p) => [`pipeline_${p.stage}`, p.value]),
+    ]
+    const blob = new Blob([rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'zeus-ops-analytics.csv'
+    a.click()
+    URL.revokeObjectURL(a.href)
+  }
+
   const metricCards = [
     {
       title: 'Total Revenue',
-      value: `$${(data?.overview.totalRevenue || 0).toLocaleString()}`,
-      change: '+12.5%',
-      trend: 'up',
+      value: `$${(data?.totalRevenue || 0).toLocaleString()}`,
+      sub: 'Closed-won deal value',
       icon: DollarSign
     },
     {
       title: 'MRR',
-      value: `$${(data?.overview.mrr || 0).toLocaleString()}`,
-      change: '+8.2%',
-      trend: 'up',
+      value: `$${(data?.mrr || 0).toLocaleString()}`,
+      sub: 'Active subscriptions',
       icon: TrendingUp
     },
     {
       title: 'Total Leads',
-      value: (data?.overview.totalLeads || 0).toString(),
-      change: '+24',
-      trend: 'up',
+      value: (data?.totalLeads || 0).toString(),
+      sub: `${data?.newLeadsThisMonth || 0} new this month`,
       icon: Users
     },
     {
       title: 'Conversion Rate',
-      value: `${(data?.overview.conversionRate || 0).toFixed(1)}%`,
-      change: '+2.3%',
-      trend: 'up',
+      value: `${(data?.conversionRate || 0).toFixed(1)}%`,
+      sub: 'Won ÷ closed deals',
       icon: Target
     }
   ]
@@ -127,17 +91,7 @@ export function AnalyticsPage() {
           <p className="text-slate-400 mt-1">Track performance and growth metrics</p>
         </div>
         <div className="flex gap-3">
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="bg-[#0f0f1b] border border-white/10 rounded-lg px-4 py-2 text-slate-300"
-          >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
-          </select>
-          <Button variant="outline">
+          <Button variant="outline" onClick={exportCsv}>
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
@@ -155,17 +109,7 @@ export function AnalyticsPage() {
               <div>
                 <p className="text-slate-400 text-sm">{metric.title}</p>
                 <p className="text-3xl font-bold text-white mt-2">{metric.value}</p>
-                <div className="flex items-center mt-2">
-                  {metric.trend === 'up' ? (
-                    <ArrowUpRight className="w-4 h-4 text-green-400 mr-1" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-red-400 mr-1" />
-                  )}
-                  <span className={metric.trend === 'up' ? 'text-green-400' : 'text-red-400'}>
-                    {metric.change}
-                  </span>
-                  <span className="text-slate-500 ml-1 text-sm">vs last period</span>
-                </div>
+                <p className="text-slate-500 text-sm mt-2">{metric.sub}</p>
               </div>
               <div className="p-3 rounded-lg bg-cyan-500/10">
                 <metric.icon className="w-6 h-6 text-cyan-400" />
@@ -180,25 +124,23 @@ export function AnalyticsPage() {
         {/* Revenue Chart */}
         <div className="bg-[#0f0f1b] border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-6">Revenue Overview</h2>
-          <div className="h-64 flex items-end gap-2">
-            {data?.revenueByMonth?.map((month, i) => {
-              const max = Math.max(...(data?.revenueByMonth?.map(m => m.revenue) || [1]))
+          <div className="h-64 flex items-stretch gap-2">
+            {data?.revenueByMonth?.length ? data.revenueByMonth.map((month, i) => {
+              const max = Math.max(1, ...(data?.revenueByMonth?.map(m => m.revenue) || [1]))
               const height = (month.revenue / max) * 100
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="w-full relative">
+                <div key={i} className="flex-1 min-w-0 flex flex-col items-center gap-2" title={`$${month.revenue.toLocaleString()}`}>
+                  <span className="text-xs text-slate-300">${(month.revenue / 1000).toFixed(0)}k</span>
+                  <div className="w-full flex-1 flex items-end">
                     <div
                       className="w-full bg-gradient-to-t from-cyan-500 to-cyan-400 rounded-t-lg transition-all duration-500"
-                      style={{ height: `${Math.max(height, 10)}%` }}
+                      style={{ height: `${Math.max(height, 4)}%` }}
                     />
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs text-slate-400 opacity-0 hover:opacity-100 transition-opacity">
-                      ${(month.revenue / 1000).toFixed(0)}k
-                    </div>
                   </div>
                   <span className="text-xs text-slate-500">{month.month}</span>
                 </div>
               )
-            }) || (
+            }) : (
               <div className="w-full h-full flex items-center justify-center text-slate-500">
                 No revenue data
               </div>
@@ -210,7 +152,7 @@ export function AnalyticsPage() {
         <div className="bg-[#0f0f1b] border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-6">Lead Funnel</h2>
           <div className="space-y-4">
-            {data?.leadsByStatus?.map((status) => (
+            {data?.leadsByStatus?.length ? data.leadsByStatus.map((status) => (
               <div key={status.status} className="flex items-center gap-4">
                 <div className="w-24 text-sm text-slate-400 capitalize">{status.status.replace('_', ' ')}</div>
                 <div className="flex-1 h-8 bg-white/5 rounded-lg overflow-hidden relative">
@@ -224,7 +166,7 @@ export function AnalyticsPage() {
                 </div>
                 <div className="w-12 text-right text-slate-400 text-sm">{status.percentage}%</div>
               </div>
-            )) || (
+            )) : (
               <div className="text-center py-8 text-slate-500">No lead data</div>
             )}
           </div>
@@ -243,7 +185,7 @@ export function AnalyticsPage() {
             <p className="text-slate-400 mt-1">Total pipeline</p>
           </div>
           <div className="space-y-3 mt-6">
-            {data?.pipelineByStage?.map((stage) => (
+            {data?.pipelineByStage?.length ? data.pipelineByStage.map((stage) => (
               <div key={stage.stage} className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
                 <span className="text-slate-300 capitalize">{stage.stage.replace('_', ' ')}</span>
                 <div className="text-right">
@@ -251,7 +193,7 @@ export function AnalyticsPage() {
                   <p className="text-xs text-slate-500">{stage.count} deals</p>
                 </div>
               </div>
-            )) || (
+            )) : (
               <div className="text-center py-4 text-slate-500">No pipeline data</div>
             )}
           </div>
@@ -261,7 +203,7 @@ export function AnalyticsPage() {
         <div className="bg-[#0f0f1b] border border-white/10 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-4">Top Clients</h2>
           <div className="space-y-4">
-            {data?.topClients?.map((client, i) => (
+            {data?.topClients?.length ? data.topClients.map((client, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-[#0a0a0f] rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-medium text-sm">
@@ -271,12 +213,9 @@ export function AnalyticsPage() {
                 </div>
                 <div className="text-right">
                   <p className="font-medium text-white">${(client.revenue / 1000).toFixed(0)}k</p>
-                  <p className={`text-xs ${client.growth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {client.growth >= 0 ? '+' : ''}{client.growth}%
-                  </p>
                 </div>
               </div>
-            )) || (
+            )) : (
               <div className="text-center py-4 text-slate-500">No client data</div>
             )}
           </div>
@@ -287,20 +226,16 @@ export function AnalyticsPage() {
           <h2 className="text-xl font-semibold text-white mb-4">Task Performance</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-[#0a0a0f] rounded-lg text-center">
-              <p className="text-3xl font-bold text-white">{data?.taskStats.total || 0}</p>
+              <p className="text-3xl font-bold text-white">{data?.taskStats.total ?? 0}</p>
               <p className="text-sm text-slate-400 mt-1">Total Tasks</p>
             </div>
             <div className="p-4 bg-[#0a0a0f] rounded-lg text-center">
-              <p className="text-3xl font-bold text-green-400">{data?.taskStats.completed || 0}</p>
+              <p className="text-3xl font-bold text-green-400">{data?.taskStats.completed ?? 0}</p>
               <p className="text-sm text-slate-400 mt-1">Completed</p>
             </div>
             <div className="p-4 bg-[#0a0a0f] rounded-lg text-center">
-              <p className="text-3xl font-bold text-cyan-400">{data?.taskStats.completionRate || 0}%</p>
+              <p className="text-3xl font-bold text-cyan-400">{data?.taskStats.completionRate ?? 0}%</p>
               <p className="text-sm text-slate-400 mt-1">Completion Rate</p>
-            </div>
-            <div className="p-4 bg-[#0a0a0f] rounded-lg text-center">
-              <p className="text-3xl font-bold text-purple-400">{data?.taskStats.avgCompletionTime || 0}d</p>
-              <p className="text-sm text-slate-400 mt-1">Avg. Time</p>
             </div>
           </div>
         </div>

@@ -109,12 +109,12 @@ export function Sidebar({ items, user }: SidebarProps) {
         <div className="flex items-center gap-3 mb-4">
           <div className="w-9 h-9 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
             <span className="text-sm font-medium text-cyan-400">
-              {user?.name?.charAt(0).toUpperCase()}
+              {user?.firstName?.charAt(0).toUpperCase()}
             </span>
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.name}</p>
+              <p className="text-sm font-medium text-white truncate">{user?.firstName} {user?.lastName}</p>
               <p className="text-xs text-slate-400 truncate">{user?.email}</p>
             </div>
           )}

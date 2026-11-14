@@ -2,6 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { Lead, Contact, Booking, Activity } from '../models/index.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { constructWebhookEvent } from '../services/stripe.js';
 
 const router = Router();
 
@@ -10,14 +11,21 @@ router.post(
   '/stripe',
   asyncHandler(async (req, res) => {
     const sig = req.headers['stripe-signature'];
-    
-    if (!sig) {
+
+    // Fail closed: never process payment events we cannot authenticate.
+    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+      return res.status(503).json({ error: 'Stripe webhooks are not configured' });
+    }
+    if (typeof sig !== 'string' || !(req as any).rawBody) {
       return res.status(400).json({ error: 'Stripe signature missing' });
     }
 
-    // Verify webhook signature (in production, use stripe.webhooks.constructEvent)
-    // For now, we'll process the webhook data directly
-    const event = req.body;
+    let event: any;
+    try {
+      event = constructWebhookEvent((req as any).rawBody, sig);
+    } catch (err) {
+      return res.status(400).json({ error: 'Invalid Stripe signature' });
+    }
 
     if (!event || !event.type) {
       return res.status(400).json({ error: 'Invalid webhook payload' });
@@ -175,19 +183,25 @@ router.post(
 router.post(
   '/calendly',
   asyncHandler(async (req, res) => {
-    // Verify Calendly webhook signature if available
-    const signature = req.headers['calendly-webhook-signature'];
-    
-    if (signature && process.env.CALENDLY_WEBHOOK_SECRET) {
-      // Verify signature
-      const expectedSignature = crypto
-        .createHmac('sha256', process.env.CALENDLY_WEBHOOK_SECRET)
-        .update(JSON.stringify(req.body))
-        .digest('hex');
-      
-      if (signature !== expectedSignature) {
-        return res.status(401).json({ error: 'Invalid signature' });
-      }
+    // Fail closed: verify the Calendly signature ("t=<ts>,v1=<hmac>") before touching any data.
+    const secret = process.env.CALENDLY_WEBHOOK_SECRET;
+    if (!secret) {
+      return res.status(503).json({ error: 'Calendly webhooks are not configured' });
+    }
+    const header = req.headers['calendly-webhook-signature'];
+    const parts = Object.fromEntries(
+      String(header || '').split(',').map((kv) => kv.trim().split('=') as [string, string])
+    );
+    const rawBody: Buffer | undefined = (req as any).rawBody;
+    if (!parts.t || !parts.v1 || !rawBody) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+    const expected = crypto.createHmac('sha256', secret).update(`${parts.t}.${rawBody.toString('utf8')}`).digest('hex');
+    const a = Buffer.from(expected);
+    const b = Buffer.from(String(parts.v1));
+    const fresh = Math.abs(Date.now() / 1000 - Number(parts.t)) < 300; // 5-minute replay window
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b) || !fresh) {
+      return res.status(401).json({ error: 'Invalid signature' });
     }
 
     const event = req.body;

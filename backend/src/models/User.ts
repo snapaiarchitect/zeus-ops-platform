@@ -40,8 +40,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   }
 
   public toJSON() {
-    const values = { ...this.get() };
-    delete values.password;
+    const { password: _omit, ...values } = this.get();
     return values;
   }
 }

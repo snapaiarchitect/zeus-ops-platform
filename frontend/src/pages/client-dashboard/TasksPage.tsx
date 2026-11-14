@@ -74,7 +74,7 @@ export function ClientTasksPage() {
     if (!newTask.title.trim()) return
 
     try {
-      await tasksService.create({
+      await tasksService.createMine({
         title: newTask.title,
         description: newTask.description,
         priority: newTask.priority,
@@ -90,7 +90,7 @@ export function ClientTasksPage() {
 
   const handleUpdateStatus = async (taskId: string, status: TaskStatus) => {
     try {
-      await tasksService.updateStatus(taskId, status)
+      await tasksService.updateMyStatus(taskId, status)
       loadTasks()
     } catch (error) {
       console.error('Failed to update status:', error)
@@ -326,10 +326,10 @@ export function ClientTasksPage() {
                       )}
 
                       {/* Assigned */}
-                      {task.assignedToName && (
+                      {task.assignee && (
                         <span className="text-xs text-slate-400 flex items-center gap-1">
                           <User className="w-3 h-3" />
-                          {task.assignedToName}
+                          {task.assignee.firstName} {task.assignee.lastName}
                         </span>
                       )}
                     </div>

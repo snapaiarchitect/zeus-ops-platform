@@ -1,33 +1,24 @@
-import { api } from './api'
-import type { Contact, CreateContactData, UpdateContactData } from '@/types/crm'
+import { api, clean } from './api'
+import type { Contact, ContactInput, ContactFilters, Pagination } from '@/types/crm'
 
 export const contactsService = {
-  async getAll(params?: { search?: string; tags?: string[] }): Promise<Contact[]> {
-    const response = await api.get<Contact[]>('/contacts', { params })
-    return response.data
+  async getAll(params?: ContactFilters): Promise<{ contacts: Contact[]; pagination: Pagination }> {
+    const { data } = await api.get('/contacts', { params: { limit: 100, ...params } })
+    return data
   },
-
   async getById(id: string): Promise<Contact> {
-    const response = await api.get<Contact>(`/contacts/${id}`)
-    return response.data
+    const { data } = await api.get<{ contact: Contact }>(`/contacts/${id}`)
+    return data.contact
   },
-
-  async create(data: CreateContactData): Promise<Contact> {
-    const response = await api.post<Contact>('/contacts', data)
-    return response.data
+  async create(input: ContactInput): Promise<Contact> {
+    const { data } = await api.post<{ contact: Contact }>('/contacts', clean(input))
+    return data.contact
   },
-
-  async update(id: string, data: UpdateContactData): Promise<Contact> {
-    const response = await api.patch<Contact>(`/contacts/${id}`, data)
-    return response.data
+  async update(id: string, input: Partial<ContactInput>): Promise<Contact> {
+    const { data } = await api.patch<{ contact: Contact }>(`/contacts/${id}`, clean(input))
+    return data.contact
   },
-
   async delete(id: string): Promise<void> {
     await api.delete(`/contacts/${id}`)
-  },
-
-  async getTags(): Promise<string[]> {
-    const response = await api.get<string[]>('/contacts/tags')
-    return response.data
   },
 }

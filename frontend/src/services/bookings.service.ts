@@ -1,33 +1,23 @@
-import { api } from './api'
-import type { Booking, CreateBookingData, UpdateBookingData } from '@/types/booking'
+import { api, clean } from './api'
+import type { Booking, BookingInput, BookingFilters, BookingStatus } from '@/types/booking'
+import type { Pagination } from '@/types/crm'
 
 export const bookingsService = {
-  async getAll(params?: { startDate?: string; endDate?: string; status?: string }): Promise<Booking[]> {
-    const response = await api.get<Booking[]>('/bookings', { params })
-    return response.data
+  async getAll(params?: BookingFilters | string): Promise<{ bookings: Booking[]; pagination: Pagination }> {
+    const query = typeof params === 'string' ? { status: params } : params
+    const { data } = await api.get('/bookings', { params: { limit: 100, ...query } })
+    return data
   },
-
-  async getById(id: string): Promise<Booking> {
-    const response = await api.get<Booking>(`/bookings/${id}`)
-    return response.data
+  async create(input: BookingInput): Promise<Booking> {
+    const { data } = await api.post<{ booking: Booking }>('/bookings', clean(input))
+    return data.booking
   },
-
-  async create(data: CreateBookingData): Promise<Booking> {
-    const response = await api.post<Booking>('/bookings', data)
-    return response.data
+  async updateStatus(id: string, status: BookingStatus, extra?: { outcome?: string; followUpRequired?: boolean; followUpNotes?: string }): Promise<Booking> {
+    const { data } = await api.patch<{ booking: Booking }>(`/bookings/${id}/status`, clean({ status, ...extra }))
+    return data.booking
   },
-
-  async update(id: string, data: UpdateBookingData): Promise<Booking> {
-    const response = await api.patch<Booking>(`/bookings/${id}`, data)
-    return response.data
-  },
-
-  async delete(id: string): Promise<void> {
-    await api.delete(`/bookings/${id}`)
-  },
-
-  async getAvailability(date: string): Promise<{ time: string; available: boolean }[]> {
-    const response = await api.get(`/bookings/availability`, { params: { date } })
-    return response.data
+  async getAvailability(from: string, to: string): Promise<{ bookedSlots: { time: string; duration: number }[] }> {
+    const { data } = await api.get('/bookings/availability', { params: { from, to } })
+    return data
   },
 }

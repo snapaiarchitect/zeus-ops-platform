@@ -86,7 +86,8 @@ export function RegisterPage() {
     setIsLoading(true)
     try {
       await register({
-        name: formData.name,
+        firstName: formData.name.trim().split(/\s+/)[0],
+        lastName: formData.name.trim().split(/\s+/).slice(1).join(' ') || '-',
         email: formData.email,
         password: formData.password,
         company: formData.company,

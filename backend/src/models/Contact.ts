@@ -27,7 +27,7 @@ export interface ContactAttributes {
   updatedAt?: Date;
 }
 
-export interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'createdAt' | 'updatedAt' | 'tags' | 'isClient'> {}
 
 class Contact extends Model<ContactAttributes, ContactCreationAttributes> implements ContactAttributes {
   public id!: string;
@@ -100,8 +100,8 @@ Contact.init(
     indexes: [
       { fields: ['userId'] },
       { fields: ['company'] },
-      { fields: ['isClient'] },
-      { fields: ['tags'] }
+      { fields: ['isClient'] }
+      // no index on `tags`: it is a JSON column, which Postgres cannot btree-index
     ]
   }
 );
