@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { sequelize } from './database/index.js';
 import { enableRowLevelSecurity } from './database/security.js';
+import { bootstrapAdmin } from './database/bootstrap.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -111,6 +112,7 @@ const startServer = async () => {
     console.log('✅ Database models synchronized');
     const secured = await enableRowLevelSecurity();
     if (secured.length) console.log(`🔒 Row-level security enabled on ${secured.length} tables`);
+    await bootstrapAdmin();
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
